@@ -1,3 +1,4 @@
+
 [![SQL CLI Test and Build](https://github.com/opensearch-project/sql/workflows/SQL%20CLI%20Test%20and%20Build/badge.svg)](https://github.com/opensearch-project/sql/actions)
 [![Latest Version](https://img.shields.io/pypi/v/opensearchsql.svg)](https://pypi.python.org/pypi/opensearchsql/)
 [![Documentation](https://img.shields.io/badge/documentation-blue.svg)](https://docs-beta.opensearch.org/docs/sql/cli/)
@@ -16,6 +17,14 @@ Users can run this CLI from Unix like OS or Windows, and connect to any valid Op
 ![](screenshots/usage.gif)
 
 
+### SQL CLI
+
+|       |                                                 |
+| ----- | ----------------------------------------------- |
+| Test and build | [![SQL CLI CI][sql-cli-build-badge]][sql-cli-build-link] |
+
+[sql-cli-build-badge]: https://github.com/opensearch-project/sql/actions/workflows/sql-cli-test-and-build-workflow.yml/badge.svg
+[sql-cli-build-link]: https://github.com/opensearch-project/sql/actions/workflows/sql-cli-test-and-build-workflow.yml
 
 ## Features
 
@@ -146,4 +155,5 @@ See the [LICENSE](LICENSE.TXT) file for our project's licensing. We will ask you
 ## Copyright
 
 Copyright OpenSearch Contributors. See [NOTICE](NOTICE) for details.
+
 
