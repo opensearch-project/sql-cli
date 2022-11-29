@@ -13,7 +13,7 @@ It only supports [OpenSearch SQL Plugin](https://docs-beta.opensearch.org/search
 You must have the OpenSearch SQL plugin installed to your OpenSearch instance to connect. 
 Users can run this CLI from Unix like OS or Windows, and connect to any valid OpenSearch end-point such as Amazon OpenSearch Service.
 
-![](./screenshots/usage.gif)
+![](screenshots/usage.gif)
 
 
 
@@ -132,7 +132,7 @@ Run single query from command line with options
 
 ## Code of Conduct
 
-This project has adopted an [Open Source Code of Conduct](./CODE_OF_CONDUCT.md).
+This project has adopted an [Open Source Code of Conduct](CODE_OF_CONDUCT.md).
 
 
 ## Security issue notifications
@@ -141,9 +141,9 @@ If you discover a potential security issue in this project we ask that you notif
 
 ## Licensing
 
-See the [LICENSE](./LICENSE.TXT) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
+See the [LICENSE](LICENSE.TXT) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
 
 ## Copyright
 
-Copyright OpenSearch Contributors. See [NOTICE](./NOTICE) for details.
+Copyright OpenSearch Contributors. See [NOTICE](NOTICE) for details.
 

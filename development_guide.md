@@ -21,7 +21,7 @@ https uses 443 by default.
 - Pytest
     - `pip install -r requirements-dev.txt` Install test frameworks including Pytest and mock.
     - `cd` into `tests` and run `pytest`
-- Refer to [test_plan](./tests/test_plan.md) for manual test guidance.
+- Refer to [test_plan](tests/test_plan.md) for manual test guidance.
 
 ### Style
 - Use [black](https://github.com/psf/black) to format code, with option of `--line-length 120`
