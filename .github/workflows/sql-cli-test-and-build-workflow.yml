@@ -6,7 +6,7 @@ on:
     branches-ignore:
       - 'dependabot/**'
     paths:
-      - 'sql-cli/**'
+      - '.'
       - '.github/workflows/sql-cli-test-and-build-workflow.yml'
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: sql-cli
+        working-directory: .
     strategy:
       matrix:
         python-version: [3.8]
@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: opensearchsql
-          path: sql-cli/opensearchsql-builds
+          path: opensearchsql-builds
 
       - name: Clean up container
         if: always()
