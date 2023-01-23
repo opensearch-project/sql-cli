@@ -1,7 +1,7 @@
 
-[![SQL CLI Test and Build](https://github.com/opensearch-project/sql/workflows/SQL%20CLI%20Test%20and%20Build/badge.svg)](https://github.com/opensearch-project/sql/actions)
+[![SQL CLI Test and Build](https://github.com/opensearch-project/sql-cli/workflows/SQL%20CLI%20Test%20and%20Build/badge.svg)](https://github.com/opensearch-project/sql-cli/actions)
 [![Latest Version](https://img.shields.io/pypi/v/opensearchsql.svg)](https://pypi.python.org/pypi/opensearchsql/)
-[![Documentation](https://img.shields.io/badge/documentation-blue.svg)](https://docs-beta.opensearch.org/docs/sql/cli/)
+[![Documentation](https://img.shields.io/badge/documentation-blue.svg)](https://opensearch.org/docs/latest/search-plugins/sql/cli/)
 [![Chat](https://img.shields.io/badge/chat-on%20forums-blue)](https://forum.opensearch.org/c/plugins/sql)
 ![PyPi Downloads](https://img.shields.io/pypi/dm/opensearchsql.svg)
 ![PRs welcome!](https://img.shields.io/badge/PRs-welcome!-success)
@@ -10,7 +10,7 @@
 
 The SQL CLI component in OpenSearch is a stand-alone Python application and can be launched by a 'wake' word `opensearchsql`. 
 
-It only supports [OpenSearch SQL Plugin](https://docs-beta.opensearch.org/search-plugins/sql/index/)
+It only supports [OpenSearch SQL Plugin](https://opensearch.org/docs/latest/search-plugins/sql/)
 You must have the OpenSearch SQL plugin installed to your OpenSearch instance to connect. 
 Users can run this CLI from Unix like OS or Windows, and connect to any valid OpenSearch end-point such as Amazon OpenSearch Service.
 
@@ -23,8 +23,8 @@ Users can run this CLI from Unix like OS or Windows, and connect to any valid Op
 | ----- | ----------------------------------------------- |
 | Test and build | [![SQL CLI CI][sql-cli-build-badge]][sql-cli-build-link] |
 
-[sql-cli-build-badge]: https://github.com/opensearch-project/sql/actions/workflows/sql-cli-test-and-build-workflow.yml/badge.svg
-[sql-cli-build-link]: https://github.com/opensearch-project/sql/actions/workflows/sql-cli-test-and-build-workflow.yml
+[sql-cli-build-badge]: https://github.com/opensearch-project/sql-cli/actions/workflows/sql-cli-test-and-build-workflow.yml/badge.svg
+[sql-cli-build-link]: https://github.com/opensearch-project/sql-cli/actions/workflows/sql-cli-test-and-build-workflow.yml
 
 ## Features
 
@@ -119,7 +119,7 @@ For a list of all available configurations, see [clirc](https://github.com/opens
 
     By default, you see a maximum output of 200 rows. To show more results, add a `LIMIT` clause with the desired value.
 
-The CLI supports all types of query that OpenSearch SQL supports. Refer to [OpenSearch SQL basic usage documentation.](https://github.com/opensearch-project/sql#basic-usage)
+The CLI supports all types of query that OpenSearch SQL supports. Refer to [OpenSearch SQL basic usage documentation.](https://github.com/opensearch-project/sql/blob/main/docs/user/dql/basics.rst)
 
 
 ## Query options
