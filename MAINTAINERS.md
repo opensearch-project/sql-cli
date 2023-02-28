@@ -4,13 +4,19 @@ This document contains a list of maintainers in this repo. See [opensearch-proje
 
 ## Current Maintainers
 
-| Maintainer      | GitHub ID                                     | Affiliation |
-| --------------- | --------------------------------------------- | ----------- |
-| Abbas Hussain   | [abbashus](https://github.com/abbashus)       | Amazon      |
-| Alolita Sharma  | [alolita](https://github.com/alolita)         | Amazon      |
-| Anirudha Jadhav | [anirudha](https://github.com/anirudha)       | Amazon      |
-| Chloe Zhang     | [chloe-zh](https://github.com/chloe-zh)       | Amazon      |
-| Joshua Li       | [joshuali925](https://github.com/joshuali925) | Amazon      |
-| Zhongnan Su     | [zhongnansu](https://github.com/CEHENKLE)     | Amazon      |
+| Maintainer            | GitHub ID                                           | Affiliation |
+| --------------------- | --------------------------------------------------- | ----------- |
+| Peng Huo              | [penghuo](https://github.com/penghuo)               | Amazon      |
+| Chen Dai              | [dai-chen](https://github.com/dai-chen)             | Amazon      |
+| Joshua Li             | [joshuali925](https://github.com/joshuali925        | Amazon      |
+| Vamsi Manohar         | [vamsi-amazon](https://github.com/vamsi-amazon      | Amazon      |
+| Max Ksyunz            | [MaxKsyunz](https://github.com/MaxKsyunz)           | BitQuill    |
+| Yury Fridlyand        | [Yury-Fridlyand](https://github.com/Yury-Fridlyand) | BitQuill    |
 
+## Emeritus Maintainers
 
+| Maintainer        | GitHub ID                                               | Affiliation |
+| ----------------- | ------------------------------------------------------- | ----------- |
+| Charlotte Henkle  | [CEHENKLE](https://github.com/CEHENKLE)                 | Amazon      |
+| Anirudha Jadhav   | [anirudha](https://github.com/anirudha)                 | Amazon      |
+| Nick Knize        | [nknize](https://github.com/nknize)                     | Amazon      |
