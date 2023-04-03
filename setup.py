@@ -9,7 +9,7 @@ import ast
 from setuptools import setup, find_packages
 
 install_requirements = [
-    "click == 7.1.1",
+    "click == 7.1.2",
     "prompt_toolkit == 2.0.6",
     "Pygments == 2.11.1",
     "cli_helpers[styles] == 1.2.1",
