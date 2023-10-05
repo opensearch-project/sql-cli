@@ -16,7 +16,7 @@ install_requirements = [
     "opensearch-py == 1.0.0",
     "pyfiglet == 0.8.post1",
     "boto3 == 1.16.29",
-    "requests-aws4auth == 0.9",
+    "requests-aws4auth == 1.2.3",
 ]
 
 _version_re = re.compile(r"__version__\s+=\s+(.*)")
