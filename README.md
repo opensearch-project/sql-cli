@@ -78,7 +78,7 @@ To install the SQL CLI:
 1. To launch the CLI, run:
 
     ```
-    opensearchsql https://localhost:9200 --username admin --password admin
+    opensearchsql https://localhost:9200 --username admin --password < Admin password >
     ```
     By default, the `opensearchsql` command connects to [http://localhost:9200](http://localhost:9200/).
 
@@ -107,7 +107,7 @@ For a list of all available configurations, see [clirc](https://github.com/opens
 2. Index the sample data.
 
     ```
-    curl -H "Content-Type: application/x-ndjson" -POST https://localhost:9200/data/_bulk -u admin:admin --insecure --data-binary "@accounts.json"
+    curl -H "Content-Type: application/x-ndjson" -POST https://localhost:9200/data/_bulk -u admin:< Admin password > --insecure --data-binary "@accounts.json"
     ```
 
 
