@@ -1,5 +1,4 @@
 import os
-import moto.opensearchserverless
 import pytest
 from opensearch_sql_cli.opensearch_connection import OpenSearchConnection
 import vcr
