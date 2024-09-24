@@ -63,11 +63,11 @@ class TestFormatter:
 
         expected = [
             "fetched rows / total rows = 1/1",
-            "+------+-----+",
-            "| name | age |",
-            "|------+-----|",
-            "| Tim  | 24  |",
-            "+------+-----+",
+            "+--------+-------+",
+            "| name   | age   |",
+            "|--------+-------|",
+            "| Tim    | 24    |",
+            "+--------+-------+",
         ]
         assert list(results) == expected
 
@@ -109,11 +109,11 @@ class TestFormatter:
 
         expected = [
             "fetched rows / total rows = 1/1",
-            "+------+---------+",
-            "| name | age     |",
-            "|------+---------|",
-            "| Tim  | [24,25] |",
-            "+------+---------+",
+            "+--------+---------+",
+            "| name   | age     |",
+            "|--------+---------|",
+            "| Tim    | [24,25] |",
+            "+--------+---------+",
         ]
         assert list(results) == expected
 
@@ -161,11 +161,11 @@ class TestFormatter:
         expected = [
             "fetched rows / total rows = 200/1000\n"
             "Attention: Use LIMIT keyword when retrieving more than 200 rows of data",
-            "+------+---------+",
-            "| name | age     |",
-            "|------+---------|",
-            "| Tim  | [24,25] |",
-            "+------+---------+",
+            "+--------+---------+",
+            "| name   | age     |",
+            "|--------+---------|",
+            "| Tim    | [24,25] |",
+            "+--------+---------+",
         ]
         assert list(results) == expected
 
