@@ -3,5 +3,4 @@ mock==3.0.5
 pexpect==3.3
 twine==1.13.0
 tox>=1.9.2
-vcrpy==6.0.1
 pytest-vcr>=1.0.2
