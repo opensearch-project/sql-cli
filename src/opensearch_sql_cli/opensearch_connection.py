@@ -126,7 +126,7 @@ class OpenSearchConnection:
 
             if self.is_aws_serverless:
                 # Serverless is versionless
-                self.opensearch_version = "serverless"
+                self.opensearch_version = "Serverless"
             else:
                 # info() may throw ConnectionError, if connection fails to establish
                 info = opensearch_client.info()
