@@ -12,11 +12,12 @@ install_requirements = [
     "click == 7.1.2",
     "prompt_toolkit == 2.0.6",
     "Pygments == 2.15.1",
-    "cli_helpers[styles] == 1.2.1",
+    "cli_helpers[styles] == 2.3.0",
     "opensearch-py == 1.0.0",
     "pyfiglet == 0.8.post1",
     "boto3 == 1.34.34",
     "requests-aws4auth == 1.2.3",
+    "setuptools == 74.1.2",
 ]
 
 _version_re = re.compile(r"__version__\s+=\s+(.*)")
