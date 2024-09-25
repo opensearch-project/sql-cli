@@ -93,11 +93,11 @@ You can also configure the following connection properties:
 
 * `endpoint`: You do not need to specify an option, anything that follows the launch command `opensearchsql` is considered as the endpoint. If you do not provide an endpoint, by default, the SQL CLI connects to [http://localhost:9200](http://localhost:9200/).
 * `-u/-w`: Supports username and password for HTTP basic authentication, such as:
-    * OpenSearch with [OpenSearch Security Plugin](https://docs-beta.opensearch.org/security-plugin/index/) installed
+    * OpenSearch with [OpenSearch Security Plugin](https://opensearch.org/docs/latest/security/) installed
     * Amazon OpenSearch Service domain with [Fine Grained Access Control](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html) enabled
 * `--aws-auth`: Turns on AWS sigV4 authentication to connect to an Amazon Elasticsearch Service endpoint. Use with the AWS CLI (`aws configure`) to retrieve the local AWS configuration to authenticate and connect.
 
-For a list of all available configurations, see [clirc](https://github.com/opensearch-project/sql/blob/main/sql-cli/src/opensearch_sql_cli/conf/clirc).
+For a list of all available configurations, see [clirc](src/opensearch_sql_cli/conf/clirc).
 
 
 

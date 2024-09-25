@@ -47,6 +47,7 @@ class OpenSearchConnection:
         self.use_aws_authentication = use_aws_authentication
         self.query_language = query_language
         self.response_timeout = response_timeout
+        self.is_aws_serverless = self.use_aws_authentication and ".aoss.amazonaws.com" in self.endpoint
 
     def get_indices(self):
         if self.client:
@@ -54,7 +55,7 @@ class OpenSearchConnection:
             self.indices_list = list(res)
 
     def get_aes_client(self):
-        service = "es"
+        service = "es" if not self.is_aws_serverless else "aoss"
         session = boto3.Session()
         credentials = session.get_credentials()
         region = session.region_name
@@ -92,7 +93,11 @@ class OpenSearchConnection:
 
         return opensearch_client
 
-    def is_sql_plugin_installed(self, opensearch_client):
+    def is_sql_plugin_installed(self, opensearch_client: OpenSearch) -> bool:
+        if self.is_aws_serverless:
+            # If using serverless there's no _cat/plugins endpoint, SQL is always installed. See:
+            # https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-genref.html#serverless-plugins
+            return True
         self.plugins = opensearch_client.cat.plugins(params={"s": "component", "v": "true"})
         sql_plugin_name_list = ["opensearch-sql"]
         return any(x in self.plugins for x in sql_plugin_name_list)
@@ -103,7 +108,6 @@ class OpenSearchConnection:
 
         if self.http_auth:
             opensearch_client = self.get_opensearch_client()
-
         elif self.use_aws_authentication:
             opensearch_client = self.get_aes_client()
         else:
@@ -120,9 +124,14 @@ class OpenSearchConnection:
                 click.echo(self.plugins)
                 sys.exit()
 
-            # info() may throw ConnectionError, if connection fails to establish
-            info = opensearch_client.info()
-            self.opensearch_version = info["version"]["number"]
+            if self.is_aws_serverless:
+                # Serverless is versionless
+                self.opensearch_version = "Serverless"
+            else:
+                # info() may throw ConnectionError, if connection fails to establish
+                info = opensearch_client.info()
+                self.opensearch_version = info["version"]["number"]
+
             self.client = opensearch_client
             self.get_indices()
 
@@ -167,14 +176,14 @@ class OpenSearchConnection:
         try:
             if self.query_language == "sql":
                 data = self.client.transport.perform_request(
-                    url="/_plugins/_sql/_explain" if explain else "/_plugins/_sql/",
+                    url="/_plugins/_sql/_explain" if explain else "/_plugins/_sql",
                     method="POST",
                     params=None if explain else {"format": output_format, "request_timeout": self.response_timeout},
                     body={"query": final_query},
                 )
             else:
                 data = self.client.transport.perform_request(
-                    url="/_plugins/_ppl/_explain" if explain else "/_plugins/_ppl/",
+                    url="/_plugins/_ppl/_explain" if explain else "/_plugins/_ppl",
                     method="POST",
                     params=None if explain else {"format": output_format, "request_timeout": self.response_timeout},
                     body={"query": final_query},
