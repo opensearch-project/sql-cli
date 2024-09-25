@@ -14,7 +14,8 @@ from src.opensearch_sql_cli.opensearchsql_cli import OpenSearchSqlCli
 
 INVALID_ENDPOINT = "http://invalid:9200"
 ENDPOINT = "http://localhost:9200"
-QUERY = "select * from %s" % TEST_INDEX_NAME
+# In OS >= 2.17, limit defaults to 10k, otherwise it's 200. Specify manually for consistency.
+QUERY = "select * from %s LIMIT 150" % TEST_INDEX_NAME
 
 
 class TestMain:
@@ -32,7 +33,7 @@ class TestMain:
                     {
                         "name": "OpenSearchIndexScan",
                         "description": {
-                            "request": 'OpenSearchQueryRequest(indexName=opensearchsql_cli_test, sourceBuilder={"from":0,"size":10000,"timeout":"1m","_source":{"includes":["a"],"excludes":[]}}, searchDone=false)'
+                            "request": 'OpenSearchQueryRequest(indexName=opensearchsql_cli_test, sourceBuilder={"from":0,"size":150,"timeout":"1m","_source":{"includes":["a"],"excludes":[]}}, searchDone=false)'
                         },
                         "children": [],
                     }
