@@ -27,7 +27,8 @@ class OpenSearchConnection:
         http_auth=None,
         use_aws_authentication=False,
         query_language="sql",
-        response_timeout=10
+        response_timeout=10,
+        serverless_override=None,
     ):
         """Initialize an OpenSearchConnection instance.
 
@@ -35,6 +36,9 @@ class OpenSearchConnection:
 
         :param endpoint: an url in the format of "http://localhost:9200"
         :param http_auth: a tuple in the format of (username, password)
+        :param serverless_override: by default we analyze the provided endpoint string to determine
+            whether the endpoint is serverless or not. This option allows overriding that logic and
+            forcing the connection to be serverless (true) or not (false).
         """
         self.client = None
         self.ssl_context = None
@@ -47,7 +51,10 @@ class OpenSearchConnection:
         self.use_aws_authentication = use_aws_authentication
         self.query_language = query_language
         self.response_timeout = response_timeout
-        self.is_aws_serverless = self.use_aws_authentication and ".aoss.amazonaws.com" in self.endpoint
+        if serverless_override is not None:
+            self.is_aws_serverless = serverless_override
+        else:
+            self.is_aws_serverless = self.use_aws_authentication and ".aoss.amazonaws.com" in self.endpoint
 
     def get_indices(self):
         if self.client:
