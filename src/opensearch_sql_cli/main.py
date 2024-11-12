@@ -79,6 +79,12 @@ click.disable_unicode_literals_warning = True
     default=10,
     help="Timeout in seconds to await a response from the server"
 )
+@click.option(
+    "--serverless/--no-serverless",
+    default=None,
+    is_flag=True,
+    help="Force whether to connect to OpenSearch Serverless instead of a managed cluster. Default: guess from URL",
+)
 def cli(
     endpoint,
     query,
@@ -91,7 +97,8 @@ def cli(
     always_use_pager,
     use_aws_authentication,
     query_language,
-    response_timeout
+    response_timeout,
+    serverless,
 ):
     """
     Provide endpoint for OpenSearch client.
@@ -107,7 +114,9 @@ def cli(
 
     # handle single query without more interaction with user
     if query:
-        opensearch_executor = OpenSearchConnection(endpoint, http_auth, use_aws_authentication)
+        opensearch_executor = OpenSearchConnection(
+            endpoint, http_auth, use_aws_authentication, serverless_override=serverless
+        )
         opensearch_executor.set_connection()
         if explain:
             output = opensearch_executor.execute_query(query, explain=True, use_console=False)
