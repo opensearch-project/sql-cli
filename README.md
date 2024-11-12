@@ -138,6 +138,8 @@ Run single query from command line with options
 * `-l`: Query language option. Available options are [sql, ppl]. By default it's using sql.
 * `-p`: always use pager to display output
 * `--clirc`: provide path of config file to load
+* `--serverless` / `--no-serverless`:  Force whether to connect to OpenSearch Serverless instead of
+  a managed cluster. Default: guess from URL
 
 ## Code of Conduct
 
