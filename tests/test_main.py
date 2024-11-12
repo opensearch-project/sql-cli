@@ -33,7 +33,7 @@ class TestMain:
                     {
                         "name": "OpenSearchIndexScan",
                         "description": {
-                            "request": 'OpenSearchQueryRequest(indexName=opensearchsql_cli_test, sourceBuilder={"from":0,"size":150,"timeout":"1m","_source":{"includes":["a"],"excludes":[]}}, searchDone=false)'
+                            "request": 'OpenSearchQueryRequest(indexName=opensearchsql_cli_test, sourceBuilder={"from":0,"size":150,"timeout":"1m","_source":{"includes":["a"],"excludes":[]}}, needClean=true, searchDone=false, pitId=null, cursorKeepAlive=null, searchAfter=null, searchResponse=null)'
                         },
                         "children": [],
                     }
