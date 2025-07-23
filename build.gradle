@@ -17,7 +17,7 @@ configurations {
     v2_19_0_0
 
     // used in ./gradlew run, will remove after development
-    implementation { extendsFrom sharedDependency, dev}
+    // implementation { extendsFrom sharedDependency, dev}
     v31Runtime { extendsFrom sharedDependency, v3_1_0_0}
     v219Runtime { extendsFrom sharedDependency, v2_19_0_0}
 }
@@ -62,6 +62,8 @@ spotless {
 def submodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol']
 
 def sharedDeps = [
+    // will need to publish datasources submodule into the maven 
+    // right now, will have to use it locally
     files('/Users/cnoramut/Documents/GitHub/sql/datasources/build/libs/datasources-3.1.0.0-SNAPSHOT.jar'),
     // OpenSearch 
     'org.opensearch.client:opensearch-rest-high-level-client:3.0.0',

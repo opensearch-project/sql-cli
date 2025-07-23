@@ -106,6 +106,8 @@ To install the SQL CLI:
 
 3. To launch the CLI, run:
 
+> In the [build.gradle](build.gradle): Will need to publish `datasources` submodule into the maven. Right now, user will have to put the path of datasource submodule locally from the SQL plug-in repository at `sql/datasources/build/libs/datasources-3.1.0.0-SNAPSHOT.jar`
+
     ```
     opensearchsql 
     ```
@@ -182,7 +184,7 @@ opensearchsql -v <version number>
 
 ## Configure
 
-When you first launch the SQL CLI, a configuration file is automatically created at `main/opensearchsql_cli/config/config_file` (for MacOS and Linux), the configuration is auto-loaded thereafter.
+When you first launch the SQL CLI, a configuration file is automatically loaded.
 
 You can also configure the following connection properties:
 
