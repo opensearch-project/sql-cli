@@ -73,6 +73,9 @@ target/
 # Commands history
 .cli_history
 
+# Saved Query 
+**/saved.txt
+
 .vscode/
 venv/
 
