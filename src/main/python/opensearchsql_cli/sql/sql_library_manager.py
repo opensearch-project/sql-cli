@@ -132,11 +132,11 @@ class SqlLibraryManager:
                 jar_path = sql_version.get_jar_path(project_root)
                 cmd = ["java", "-jar", jar_path, "Gateway"]
                 self.logger.info(f"Using JAR file: {jar_path}")
-            else:
-                # Use Gradle to run the Gateway class (for development)
-                # this will be removed and use 3.1 as default
-                cmd = ["./gradlew", "run", "--args=Gateway"]
-                self.logger.info("Using ./gradlew run for development")
+            # else:
+            #     # Use Gradle to run the Gateway class (for development)
+            #     # this will be removed and use 3.1 as default
+            #     cmd = ["./gradlew", "run", "--args=Gateway"]
+            #     self.logger.info("Using ./gradlew run for development")
 
             self.logger.info(f"Command: {' '.join(cmd)}")
 

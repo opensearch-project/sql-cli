@@ -88,16 +88,35 @@ class OpenSearchSQLCLI:
                 help="Use AWS SigV4 authentication for the provided URL",
             ),
             language: str = typer.Option(
-                None, "--language", "-l", help="Set language mode: PPL, SQL"
+                None,
+                "--language",
+                "-l",
+                help="Set language mode: PPL, SQL",
+                autocompletion=lambda ctx, incomplete: [
+                    "PPL",
+                    "SQL",
+                ],
             ),
             format: str = typer.Option(
-                None, "--format", "-f", help="Set output format: Table, JSON, CSV"
+                None,
+                "--format",
+                "-f",
+                help="Set output format: Table, JSON, CSV",
+                autocompletion=lambda ctx, incomplete: [
+                    "TABLE",
+                    "JSON",
+                    "CSV",
+                ],
             ),
             version: str = typer.Option(
                 None,
                 "--version",
                 "-v",
                 help="Set OpenSearch SQL plug-in version: 3.1, 2.19",
+                autocompletion=lambda ctx, incomplete: [
+                    "3.1",
+                    "2.19",
+                ],
             ),
             rebuild: bool = typer.Option(
                 False,
@@ -128,7 +147,7 @@ class OpenSearchSQLCLI:
                     return
             else:
                 # Try to get version from config file
-                config_version = config_manager.get("Query", "version", None)
+                config_version = config_manager.get("Query", "version", "")
                 if config_version:
                     success = sql_version.set_version(config_version, rebuild)
                     if not success:

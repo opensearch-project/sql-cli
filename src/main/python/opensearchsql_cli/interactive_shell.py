@@ -112,13 +112,15 @@ class InteractiveShell:
 
         # Add shell commands to the completer
         commands = ["-l", "-f", "-v", "-s", "help", "exit", "quit", "q"]
+        arguments = ["PPL", "SQL", "TABLE", "JSON", "CSV"]
 
         # Add options for -s command
         options = ["--save", "--load", "--remove", "--list"]
 
         # Create a WordCompleter with all keywords, functions, and commands
         return WordCompleter(
-            keywords + functions + commands + options, ignore_case=True
+            keywords + functions + commands + arguments + options,
+            ignore_case=True,
         )
 
     def execute_query(self, query):

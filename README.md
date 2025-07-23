@@ -93,16 +93,18 @@ To install the SQL CLI:
     ```
 
 
-1. Install the CLI:
+2. Install the CLI:
+
+> TODO: Right now, user can install `pip install -e .` at the root directory until the current version package being published.
 
     ```
-    pip3 install opensearchsql
+    pip install opensearchsql
     ```
 
     The SQL CLI only works with Python 3, since Python 2 is no longer maintained since 01/01/2020. See https://pythonclock.org/
 
 
-1. To launch the CLI, run:
+3. To launch the CLI, run:
 
     ```
     opensearchsql 
