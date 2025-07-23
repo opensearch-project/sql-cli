@@ -12,6 +12,8 @@ Interactive command-line interface (CLI) for executing PPL (Piped Processing Lan
 
 The SQL CLI component in OpenSearch is a stand-alone Python application and can be launched by a 'wake' word `opensearchsql`. 
 
+Users can run this CLI from Unix like OS or Windows, and connect to any valid OpenSearch end-point such as Amazon OpenSearch Service.
+
 ![](screenshots/usage.gif)
 
 ### Query Compatibility Testing
