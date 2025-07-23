@@ -67,6 +67,12 @@ target/
 *.deb
 *.rpm
 
+# Gradle
+.gradle
+
+# Commands history
+.cli_history
+
 .vscode/
 venv/
 

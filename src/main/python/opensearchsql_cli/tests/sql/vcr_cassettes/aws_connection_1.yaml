@@ -1,0 +1,47 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.32.4
+      x-amz-content-sha256:
+      - e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      x-amz-date:
+      - 20250719T235348Z
+      x-amz-security-token:
+      - IQoJb3JpZ2luX2VjEMj//////////wEaCXVzLWVhc3QtMSJHMEUCIC9yS0Zy2t1JadZwA+qmXzDjPjaa5wDxHvHwdQLdbkuzAiEAvmnYR342Ge8CiXS6AlDoeDVcxwZg/ADGS45uQ/sGGxoquAMI4f//////////ARABGgwwNTMyNTA0MjQxNTEiDERLOF03h3yUiGyL3iqMA4vf1ozHitcdi7KGKNqkpGSHuE70sX9RlQyJZWFDqNQMe89mmNmj9PGey0CslKsLpPxFFufd27V72dcTWqBO9PgHXxLtCtxNqUpbNPrKggcgNcdtECx5IOrEDtMu83S9XlKiQoJqWsHNTXJr85dpRDA4eetdf++YpcAXInQzWSKJ/MWrrcnOCIpWrzMOnNXS6aoINIZNqr7TdlUOMXX0Qq7im8tOkKAF7xCGhV5KZXV4sFMDkSZqqbIaibNFoWgVkfLzcTQ5pNT/D7po0nAOS5Tg/pfz+UZQ+FIVGApS7zCpw1eKyTPVZc+xfh78TxwmGnmIDpk1mI/45FrMvtyqe3661g/SsUQgx37j9RJWevuiEXqePfE38RBndhtDyU2Y+g9Pqfq5OdiXW4LV2K9Q6uV/o2v2JEM2NHFN5fviXOYWGF7rw0X1IoPwHPsqSTsIZboYknPXSg4OXg2ABC1H8wNqvzXFFTBoCnbkqORxLTWDLoanVtsvN/kgmvqJMIyawrfehQnGl+tdgG/qcDDmovvDBjqdAdgIuxIpUUvdd7JQzr8v+RguiU9Z+GTJ0OTq5Ho0UAly9G6mrn0nDRTS4AKApC9Rs+newT26RfvvV4KVV4MwnKtH0zwwNlMvTUYA8F0/TzQ2cBMDLfpYiS0uXfxBXPloOOu/DwloG2Tfv6fU18c024abW3GiVqhvO1KF1S7yp7TgvkG1hEx3acAac6u6AW4TIw7eOA5QvrWoRrxoFL0=
+    method: GET
+    uri: https://search-cli-test-r2qtaiqbhsnh5dgwvzkcnd5l2y.us-east-2.es.amazonaws.com/
+  response:
+    body:
+      string: "{\n  \"name\" : \"76f3cf63b9ccda930880ecd939207c7b\",\n  \"cluster_name\"
+        : \"053250424151:cli-test\",\n  \"cluster_uuid\" : \"iFV4zOeaTtqr62JUJFdPZg\",\n
+        \ \"version\" : {\n    \"distribution\" : \"opensearch\",\n    \"number\"
+        : \"2.19.0\",\n    \"build_type\" : \"tar\",\n    \"build_hash\" : \"unknown\",\n
+        \   \"build_date\" : \"2025-04-17T09:18:30.665390993Z\",\n    \"build_snapshot\"
+        : false,\n    \"lucene_version\" : \"9.12.1\",\n    \"minimum_wire_compatibility_version\"
+        : \"7.10.0\",\n    \"minimum_index_compatibility_version\" : \"7.0.0\"\n  },\n
+        \ \"tagline\" : \"The OpenSearch Project: https://opensearch.org/\"\n}\n"
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '346'
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Mon, 21 Jul 2025 23:53:48 GMT
+      access-control-allow-origin:
+      - '*'
+      content-encoding:
+      - gzip
+    status:
+      code: 200
+      message: OK
+version: 1

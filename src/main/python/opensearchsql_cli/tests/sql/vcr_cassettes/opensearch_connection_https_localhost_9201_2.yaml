@@ -1,0 +1,37 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.32.4
+    method: GET
+    uri: https://localhost:9201/
+  response:
+    body:
+      string: "{\n  \"name\" : \"bcd0745d17f3\",\n  \"cluster_name\" : \"opensearch\",\n
+        \ \"cluster_uuid\" : \"18fMzOVfQ0KPACKZXl2dbA\",\n  \"version\" : {\n    \"distribution\"
+        : \"opensearch\",\n    \"number\" : \"3.1.0-SNAPSHOT\",\n    \"build_type\"
+        : \"tar\",\n    \"build_hash\" : \"666c13a361ab72abee118d7b8aa8b7a26adbdfcf\",\n
+        \   \"build_date\" : \"2025-05-28T21:53:58.454284Z\",\n    \"build_snapshot\"
+        : true,\n    \"lucene_version\" : \"10.2.1\",\n    \"minimum_wire_compatibility_version\"
+        : \"2.19.0\",\n    \"minimum_index_compatibility_version\" : \"2.0.0\"\n  },\n
+        \ \"tagline\" : \"The OpenSearch Project: https://opensearch.org/\"\n}\n"
+    headers:
+      X-OpenSearch-Version:
+      - OpenSearch/3.1.0-SNAPSHOT (opensearch)
+      content-length:
+      - '568'
+      content-type:
+      - application/json; charset=UTF-8
+    status:
+      code: 200
+      message: OK
+version: 1

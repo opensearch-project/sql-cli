@@ -1,0 +1,37 @@
+{
+  "ppl": {
+    "query": "source=employees",
+    "language": "PPL",
+    "timestamp": "2025-07-03T12:03:13.477233"
+  },
+  "flight_ppl": {
+    "query": "source=opensearch_dashboards_sample_data_flights",
+    "language": "PPL",
+    "timestamp": "2025-07-09T11:41:51.039025"
+  },
+  "sqljoin": {
+    "query": "SELECT e.*, e2.* FROM employees e JOIN employees2 e2 ON e.age = e2.age WHERE e.age = 30",
+    "language": "SQL",
+    "timestamp": "2025-06-27T10:23:48.337023"
+  },
+  "ppljoin": {
+    "query": "source=employees | inner join age = age source=employees2 | where age = 30",
+    "language": "PPL",
+    "timestamp": "2025-06-27T10:33:06.123649"
+  },
+  "explainppl": {
+    "query": "explain source=employees",
+    "language": "PPL",
+    "timestamp": "2025-06-27T10:33:06.123649"
+  },
+  "explainsql": {
+    "query": "explain select * from opensearch_dashboards_sample_data_flights limit 100",
+    "language": "SQL",
+    "timestamp": "2025-07-16T12:27:50.851702"
+  },
+  "p": {
+    "query": "source=employees ",
+    "language": "PPL",
+    "timestamp": "2025-07-17T22:37:16.854338"
+  }
+}

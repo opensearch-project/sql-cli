@@ -7,24 +7,24 @@
 - `pip install --editable .` will install all dependencies from `setup.py`.
 
 ### Run CLI
-- Start an OpenSearch instance from either local, Docker with OpenSearch SQL plugin, or AWS Elasticsearch
-- To launch the cli, use 'wake' word `opensearchsql` followed by endpoint of your running OpenSearch instance. If not specifying 
-any endpoint, it uses http://localhost:9200 by default. If not provided with port number, http endpoint uses 9200 and 
-https uses 443 by default.
+- Start an OpenSearch instance from either local, Docker with OpenSearch SQL plugin, or AWS OpenSearch
+- To launch the cli, use 'wake' word `opensearchsql` followed by endpoint of your running OpenSearch instance. If not specifying any endpoint, it uses http://localhost:9200 by default. If not provided with port number, http endpoint uses 9200 and https uses 443 by default.
 
 ### Testing
 - Prerequisites
     - Build the application
-    - Start a local OpenSearch instance with 
-    [OpenSearch SQL plugin](https://opensearch.org/docs/latest/search-plugins/sql/sql/index/) installed
-    and listening at http://localhost:9200.
+    - Start a local OpenSearch instance.
 - Pytest
     - `pip install -r requirements-dev.txt` Install test frameworks including Pytest and mock.
-    - `cd` into `tests` and run `pytest`
-- Refer to [test_plan](tests/test_plan.md) for manual test guidance.
+    - `cd` into `src/main/python/opensearchsql_cli/tests` and run `pytest`
+- Refer to [README.md](src/main/python/opensearchsql_cli/tests/README.md) for manual test guidance.
 
 ### Style
-- Use [black](https://github.com/psf/black) to format code, with option of `--line-length 120`
+- Use [black](https://github.com/psf/black) to format code.
+```
+# Format all files
+black .
+```
 
 ## Release guide
 
@@ -34,7 +34,7 @@ https uses 443 by default.
 ### Workflow
 
 1. Update version number
-    1. Modify the version number in `__init__.py` under `src` package. It will be used by `setup.py` for release.
+    1. Modify the version number in [`__init__.py`](`src/main/python/opensearchsql_cli/__init__.py`). It will be used by `setup.py` for release.
 2. Create/Update `setup.py` (if needed)
     1. For more details refer to https://packaging.python.org/tutorials/packaging-projects/#creating-setup-py 
 3. Update README.md, Legal and copyright files(if needed)

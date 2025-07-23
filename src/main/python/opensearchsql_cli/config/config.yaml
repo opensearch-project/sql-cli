@@ -1,0 +1,56 @@
+# OpenSearch SQL CLI Configuration
+# Edit this file to change default settings
+# Must exit the CLI first if editing while CLI is running
+
+Connection:
+  # OpenSearch connection settings
+  #     For HTTP: localhost:9200
+  #     For HTTPS: https://localhost:9200
+  #     for AWS SigV4: URL
+  # If not providing port number after ":"
+  # By default: HTTP port is 9200
+  #             HTTPS port is 443
+  endpoint: "localhost"
+  
+  # Authentication credentials are necessary for HTTPS
+  # Must do "" as a string
+  # SECURITY WARNING:   Storing passwords in this file poses a security risk as it is not encrypted.
+  #                     Consider using -u username:password instead for sensitive environments.
+  username: ""
+  password: ""
+  
+  # Set to true to skip certificate validation, -k flag
+  insecure: false
+  
+  # Set to true to use AWS SigV4 authentication
+  aws_auth: false
+
+Query:
+  # Default query language: PPL, SQL
+  # Default output format: Table, JSON, CSV 
+  # Set to true for vertical table display mode
+  # OpenSearch SQL plugin version, must do "" as a string
+  language: "ppl"
+  format: "table"
+  vertical: false
+  version: ""
+
+SqlSettings:
+  # Advanced settings for OpenSearch SQL plugin
+  # QUERY_SIZE_LIMIT: Maximum number of rows to return in a query result
+  #   PPL Calcite results are limited by this number setting
+  #   So, "HEAD" will not increase the limit
+  #   Must modify this number to increase the result hits
+  # FIELD_TYPE_TOLERANCE: Whether to tolerate field type mismatches
+  # CALCITE_ENGINE_ENABLED: Whether to enable the Calcite SQL engine
+  # CALCITE_FALLBACK_ALLOWED: Whether to allow fallback to legacy engine if Calcite fails
+  # CALCITE_PUSHDOWN_ENABLED: Whether to enable pushdown optimization in Calcite
+  # CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR: Factor for row count estimation in pushdown
+  # SQL_CURSOR_KEEP_ALIVE: Time to keep cursor alive in minutes
+  QUERY_SIZE_LIMIT: 99999
+  FIELD_TYPE_TOLERANCE: true
+  CALCITE_ENGINE_ENABLED: true
+  CALCITE_FALLBACK_ALLOWED: true
+  CALCITE_PUSHDOWN_ENABLED: true
+  CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR: 1.0
+  SQL_CURSOR_KEEP_ALIVE: 1
