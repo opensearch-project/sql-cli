@@ -34,16 +34,16 @@ class VerifyCluster:
     """
     Class for verifying connections to OpenSearch clusters.
     """
-    
+
     @staticmethod
     def get_indices(client):
         """
         Get the list of indices from an OpenSearch cluster.
-        
+
         Args:
             client: OpenSearch client
             print_list: Whether to print the list of indices
-            
+
         Returns:
             list: List of indices
         """

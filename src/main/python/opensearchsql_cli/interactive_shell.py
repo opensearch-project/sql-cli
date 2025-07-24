@@ -123,8 +123,8 @@ class InteractiveShell:
         functions = []
         for function in literals.get("functions", []):
             functions.append(function.upper())
-            
-        # Get indices from the connection 
+
+        # Get indices from the connection
         indices = []
         if self.sql_connection.client:
             # Use the client from sql_connection
@@ -239,7 +239,7 @@ class InteractiveShell:
         # Get color settings from config
         colors_section = config_manager.config.get("Colors", {})
         style = Style.from_dict(colors_section) if colors_section else None
-  
+
         # Create a PromptSession with auto-completion and syntax highlighting
         session = PromptSession(
             lexer=PygmentsLexer(SqlLexer),
