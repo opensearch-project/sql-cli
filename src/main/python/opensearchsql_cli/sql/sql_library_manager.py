@@ -14,6 +14,7 @@ import threading
 import socket
 from datetime import datetime
 from .sql_version import sql_version
+from ..config.config import config_manager
 
 
 class SqlLibraryManager:
@@ -110,8 +111,17 @@ class SqlLibraryManager:
             # Use the Java directory for logging
             java_dir = os.path.join(project_root, "src", "main", "java")
 
-            # Set up logging
-            log_file = os.path.join(java_dir, "sql_library.log")
+            # Get log file path from config or use default
+            config_log_file = config_manager.get("File", "sql_log", "")
+            if config_log_file and config_log_file.strip():
+                log_file = config_log_file
+            else:
+                # Use default log file path
+                log_file = os.path.join(java_dir, "sql_library.log")
+
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(log_file), exist_ok=True)
+
             self.logger = logging.getLogger("sql_library")
             self.logger.setLevel(logging.INFO)
 

@@ -188,6 +188,11 @@ When you first launch the SQL CLI, a configuration file is automatically loaded.
 
 You can also configure the following connection properties:
 
+### Main
+
+| Key          | Description                                            | Options                    | 
+|--------------|--------------------------------------------------------|----------------------------|
+| `multi_line` |  allows breaking up the statements into multiple lines | `true`, `false`            |
 
 ### Connection Settings
 
@@ -223,6 +228,20 @@ You can also configure the following connection properties:
 | `SQL_CURSOR_KEEP_ALIVE`                         | Cursor keep-alive time in minutes                                          | `1`      |
 
 > **Note**: **PPL Calcite** result is limited by `QUERY_SIZE_LIMIT` number
+
+### File Paths
+
+| Key             | Description           | Default Path                                                   |
+|-----------------|-----------------------|----------------------------------------------------------------|
+| `sql_log`       | SQL library log       | `src/main/java/sql_library.log`                                |
+| `history_file`  | CLI command history   | `src/main/python/opensearchsql_cli/.cli_history`               |
+| `saved_query`   | Saved query           | `src/main/python/opensearchsql_cli/query/save_query/saved.txt` |
+
+### Custom Colors
+
+The CLI supports customizing the colors of various UI elements through the config file. You can modify these settings to match your terminal theme or personal preferences.
+
+Color format: `"bg:<background_color> <text_color> [style]"` where colors are hex values and style can be `bold`, `italic`, etc.
 
 For a list of all available configurations, see [config.yaml](src/main/python/opensearchsql_cli/config/config.yaml).
 

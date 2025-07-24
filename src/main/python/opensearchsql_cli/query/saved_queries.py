@@ -10,6 +10,7 @@ import traceback
 from rich.console import Console
 from datetime import datetime
 from .execute_query import ExecuteQuery
+from ..config.config import config_manager
 
 # Create a console instance for rich formatting
 console = Console()
@@ -42,12 +43,19 @@ class SavedQueries:
                     f"[bold yellow]WARNING:[/bold yellow] [yellow]Could not create directory[/yellow] {self.base_dir}"
                 )
 
-        # Define file path for saved queries
-        self.saved_file = os.path.join(self.base_dir, "saved.txt")
+        # Get saved query file path from config or use default
+        config_saved_query = config_manager.get("File", "saved_query", "")
+        if config_saved_query and config_saved_query.strip():
+            self.saved_file = config_saved_query
+        else:
+            # Use default saved query file path
+            self.saved_file = os.path.join(self.base_dir, "saved.txt")
 
         # Create file if it doesn't exist
         if not os.path.exists(self.saved_file):
             try:
+                # Create directory if it doesn't exist
+                os.makedirs(os.path.dirname(self.saved_file), exist_ok=True)
                 with open(self.saved_file, "w") as f:
                     json.dump({}, f)
             except IOError:

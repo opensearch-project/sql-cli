@@ -70,8 +70,10 @@ class ExecuteQuery:
                 print_function(
                     f"[bold red]Semantic Error: [/bold red][red]{escape(error_parts[1].strip())}[/red]\n"
                 )
-            elif '"statement" is null' in result:
-                print_function("[bold red]Statement is null[/bold red]")
+            elif '"statement" is null' in result or "NullPointerException" in result:
+                print_function(
+                    "[bold red]Error: [/bold red][red]Could not parse the query. Please check the syntax and try again.[/red]"
+                )
             else:
                 print_function(f"[bold red]Error:[/bold red] {escape(str(result))}")
             return False, result, result
