@@ -25,6 +25,7 @@ from .query import ExecuteQuery
 from .literals import Literals
 from .config.config import config_manager
 from .sql.sql_version import sql_version
+from .sql.verify_cluster import VerifyCluster
 
 # Create a console instance for rich formatting
 console = Console()
@@ -122,11 +123,18 @@ class InteractiveShell:
         functions = []
         for function in literals.get("functions", []):
             functions.append(function.upper())
+            
+        # Get indices from the connection 
+        indices = []
+        if self.sql_connection.client:
+            # Use the client from sql_connection
+            indices = VerifyCluster.get_indices(self.sql_connection.client)
 
-        # Create a WordCompleter with all keywords, functions, and commands
+        # Create a WordCompleter with all keywords, functions, indices, and commands
         return WordCompleter(
             keywords
             + functions
+            + indices
             + self.COMMANDS
             + self.LANGUAGE
             + self.FORMAT
@@ -180,7 +188,7 @@ class InteractiveShell:
 
         if language.lower() not in self.LANGUAGE:
             console.print(
-                f"[bold red]Invalid Language:[/bold red] [red]{language.upper()}.[/red] [bold red]\nDefaulting to PPL.[/bold bold]"
+                f"[bold red]Invalid Language:[/bold red] [red]{language.upper()}.[/red] [bold red]\nDefaulting to PPL.[/bold red]"
             )
             language = "ppl"
 
@@ -231,7 +239,7 @@ class InteractiveShell:
         # Get color settings from config
         colors_section = config_manager.config.get("Colors", {})
         style = Style.from_dict(colors_section) if colors_section else None
-
+  
         # Create a PromptSession with auto-completion and syntax highlighting
         session = PromptSession(
             lexer=PygmentsLexer(SqlLexer),
@@ -239,7 +247,7 @@ class InteractiveShell:
             auto_suggest=AutoSuggestFromHistory(),
             history=FileHistory(self.histfile),
             multiline=self.multi_line,
-            prompt_continuation=lambda width, line_number, is_soft_wrap: "." * 4 + " ",
+            prompt_continuation=lambda width, line_number, is_soft_wrap: ".... ",
             key_bindings=kb,
             style=style,
         )
@@ -257,9 +265,7 @@ class InteractiveShell:
 
                 # Handle exit commands
                 if user_cmd in ["exit", "quit", "q"]:
-                    console.print(
-                        "[bold green]\nDisconnected. Goodbye!!!\n[/bold green]"
-                    )
+                    console.print("[bold green]\nSee you next search!\n[/bold green]")
                     break
 
                 # Handle help command
@@ -372,10 +378,10 @@ class InteractiveShell:
                 self.execute_query(user_input)
 
             except KeyboardInterrupt:
-                console.print("[bold green]\nDisconnected. Goodbye!!!\n[/bold green]")
+                console.print("[bold green]\nSee you next search!\n[/bold green]")
                 break
             except EOFError:
-                console.print("[bold green]\nDisconnected. Goodbye!!!\n[/bold green]")
+                console.print("[bold green]\nSee you next search!\n[/bold green]")
                 break
 
 

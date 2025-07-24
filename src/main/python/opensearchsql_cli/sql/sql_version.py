@@ -23,7 +23,7 @@ class SqlVersion:
         """
         Initialize the SQL Version manager
         """
-        self.version = "3.1.0.0" # Default version
+        self.version = "3.1.0.0"  # Default version
         self.available_versions = ["3.1.0.0", "2.19.0.0"]
 
     def set_version(self, version, rebuild=False):

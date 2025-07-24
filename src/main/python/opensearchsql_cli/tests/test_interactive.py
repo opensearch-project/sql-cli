@@ -32,7 +32,7 @@ class TestInteractiveShell:
             mock_open.assert_called_once()
 
             # Verify initial state
-            assert shell.language_mode == "PPL"
+            assert shell.language_mode == "ppl"
             assert shell.is_ppl_mode is True
             assert shell.format == "table"
             assert shell.is_vertical is False
@@ -59,7 +59,7 @@ class TestInteractiveShell:
         "language_mode, expected_lang, mock_keywords, mock_functions, expected_keywords, expected_functions",
         [
             (
-                "PPL",
+                "ppl",
                 "ppl",
                 ["source", "where", "fields"],
                 ["count", "sum", "avg"],
@@ -67,7 +67,7 @@ class TestInteractiveShell:
                 ["COUNT", "SUM"],
             ),
             (
-                "SQL",
+                "sql",
                 "sql",
                 ["SELECT", "FROM", "WHERE"],
                 ["COUNT", "SUM", "AVG"],
@@ -176,10 +176,10 @@ class TestInteractiveShell:
     @pytest.mark.parametrize(
         "language, format_option, expected_language_mode, expected_is_ppl, expected_format, is_language_valid, is_format_valid",
         [
-            ("ppl", "json", "PPL", True, "json", True, True),
-            ("sql", "table", "SQL", False, "table", True, True),
-            ("invalid", "table", "PPL", True, "table", False, True),
-            ("ppl", "invalid", "PPL", True, "table", True, False),
+            ("ppl", "json", "ppl", True, "json", True, True),
+            ("sql", "table", "sql", False, "table", True, True),
+            ("invalid", "table", "ppl", True, "table", False, True),
+            ("ppl", "invalid", "ppl", True, "table", True, False),
         ],
     )
     @patch("opensearchsql_cli.interactive_shell.PromptSession")
@@ -221,17 +221,17 @@ class TestInteractiveShell:
         # Verify error messages if applicable
         if not is_language_valid:
             mock_console.print.assert_any_call(
-                f"[bold red]Invalid Language:[/bold red] [red]{language}.[/red] [bold red]\nDefaulting to PPL.[/bold red]"
+                f"[bold red]Invalid Language:[/bold red] [red]{language.upper()}.[/red] [bold red]\nDefaulting to PPL.[/bold red]"
             )
 
         if not is_format_valid:
             mock_console.print.assert_any_call(
-                f"[bold red]Invalid Format:[/bold red] [red]{format_option}.[/red] [bold red]\nDefaulting to Table.[/bold red]"
+                f"[bold red]Invalid Format:[/bold red] [red]{format_option.upper()}.[/red] [bold red]\nDefaulting to TABLE.[/bold red]"
             )
 
         # Verify exit message was printed
         mock_console.print.assert_any_call(
-            "[bold green]\nDisconnected. Goodbye!!!\n[/bold green]"
+            "[bold green]\nSee you next search!\n[/bold green]"
         )
 
     @patch("opensearchsql_cli.interactive_shell.PromptSession")
@@ -280,7 +280,7 @@ class TestInteractiveShell:
         # Verify saved queries methods were called
         shell.saved_queries.list_saved_queries.assert_called_once()
         shell.saved_queries.saving_query.assert_called_once_with(
-            "test", "select * from test", "PPL"
+            "test", "select * from test", "ppl"
         )
         shell.saved_queries.loading_query.assert_called_once()
         shell.saved_queries.removing_query.assert_called_once_with("test")

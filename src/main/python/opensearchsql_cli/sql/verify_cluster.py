@@ -1,20 +1,30 @@
 """
 OpenSearch Connection Verification
 
-Handles verification of connections to OpenSearch clusters.
+Handles verification of connections to OpenSearch clusters using opensearchpy.
 """
 
 import ssl
 import urllib3
-import requests
 import boto3
-from rich.console import Console
-from requests_aws4auth import AWS4Auth
-from urllib.parse import urlparse
 import sys
+import warnings
+from rich.console import Console
+from opensearchpy import OpenSearch, RequestsHttpConnection
+from opensearchpy.exceptions import (
+    ConnectionError,
+    RequestError,
+    AuthenticationException,
+    AuthorizationException,
+)
+from opensearchpy.connection import create_ssl_context
+from requests_aws4auth import AWS4Auth
 
-# Disable SSL warnings
+# Disable SSL warnings from urllib3 and opensearchpy
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+warnings.filterwarnings(
+    "ignore", message="Connecting to .* using SSL with verify_certs=False is insecure"
+)
 
 # Create a console instance for rich formatting
 console = Console()
@@ -24,6 +34,28 @@ class VerifyCluster:
     """
     Class for verifying connections to OpenSearch clusters.
     """
+    
+    @staticmethod
+    def get_indices(client):
+        """
+        Get the list of indices from an OpenSearch cluster.
+        
+        Args:
+            client: OpenSearch client
+            print_list: Whether to print the list of indices
+            
+        Returns:
+            list: List of indices
+        """
+        try:
+            if client:
+                res = client.indices.get_alias().keys()
+                indices = list(res)
+                return indices
+            return []
+        except Exception as e:
+            console.print(f"[bold red]Error getting indices:[/bold red] {str(e)}")
+            return []
 
     @staticmethod
     def verify_opensearch_connection(
@@ -41,104 +73,89 @@ class VerifyCluster:
             ignore_ssl: Whether to ignore SSL certificate validation
 
         Returns:
-            tuple: (success, message, version, url, username) where:
+            tuple: (success, message, version, url, username, client) where:
                 - success: boolean indicating if the connection was successful
                 - message: string message about the connection status
                 - version: string version of OpenSearch if available, None otherwise
                 - url: string URL of the OpenSearch endpoint
                 - username: string username used for authentication if provided, None otherwise
+                - client: OpenSearch client if successful, None otherwise
         """
         try:
             # Build the URL
             url = f"{protocol}://{host}:{port}"
 
-            # Set up request headers
-            headers = {"Content-Type": "application/json"}
-
             # Set up authentication if provided
-            auth = None
+            http_auth = None
             if username and password:
-                auth = (username, password)
+                http_auth = (username, password)
 
-            # Set up SSL verification
-            verify = True
-            if ignore_ssl and protocol.lower() == "https":
-                verify = False
+            # Set up SSL context if needed
+            if protocol.lower() == "https":
+                ssl_context = create_ssl_context()
+                if ignore_ssl:
+                    ssl_context.check_hostname = False
+                    ssl_context.verify_mode = ssl.CERT_NONE
 
-            # Make the request
-            response = requests.get(
-                url, headers=headers, auth=auth, verify=verify, timeout=10
-            )
-
-            # Check the response
-            if response.status_code == 200:
-
-                # Try to parse the response to get version information
-                version = None
-                try:
-                    data = response.json()
-                    if "version" in data and "number" in data["version"]:
-                        version = data["version"]["number"]
-                except Exception:
-                    pass
-
-                return True, "success", version, url, username
-            if response.status_code == 401:
-                error_msg = f"Unautorized 401 please verify your username/password."
-                return False, error_msg, None, url, username
-            elif response.status_code == 403:
-                error_msg = f"Forbidden 403 please verify your username/password."
-            elif response.status_code == 503:
-                error_msg = f"Service Unavailable 503 please verify {url}."
-            else:
-                error_msg = f"{response.status_code}"
-                return False, error_msg, None, url, username
-
-        except Exception as e:
-            err_str = str(e)
-            # print(err_str)
-            if any(
-                e in err_str
-                for e in (
-                    "NewConnectionError",
-                    "RemoteDisconnected",
-                    "NameResolutionError",
+                # Create OpenSearch client
+                client = OpenSearch(
+                    [url],
+                    http_auth=http_auth,
+                    verify_certs=not ignore_ssl,
+                    ssl_context=ssl_context,
+                    connection_class=RequestsHttpConnection,
                 )
-            ):
-                error_msg = f"Unable to connect {url}"
-            elif "ConnectTimeoutError" in err_str:
-                error_msg = f"Connection timeout at {url}"
-            elif "SSL: WRONG_VERSION_NUMBER" in err_str:
-                error_msg = "Please check the correct protocol: HTTP/HTTPS"
-            elif "SSLCertVerificationError" in err_str:
-                error_msg = "Unable to verify SSL Certificate. Try adding -k flag"
             else:
-                error_msg = f"Connection Verification ERROR: {err_str}"
-            return False, error_msg, None, url if "url" in locals() else None, username
+                # Create OpenSearch client for HTTP
+                client = OpenSearch(
+                    [url],
+                    http_auth=http_auth,
+                    verify_certs=False,
+                    connection_class=RequestsHttpConnection,
+                )
+
+            # Get cluster info
+            info = client.info()
+
+            # Extract version
+            version = None
+            if "version" in info and "number" in info["version"]:
+                version = info["version"]["number"]
+
+            return True, "success", version, url, username, client
+
+        except (
+            AuthenticationException,
+            AuthorizationException,
+            ConnectionError,
+            Exception,
+        ) as e:
+            error_msg = f"Unable to connect {url}"
+            return False, error_msg, None, url, username, None
 
     @staticmethod
     def verify_aws_opensearch_connection(host):
         """
-        Verify connection to an AWS OpenSearch Service or OpenSearch Serverless domain.
+        Verify connection to an AWS OpenSearch Service or OpenSearch Serverless domain using opensearchpy.
 
         Args:
             host: AWS OpenSearch host (without protocol)
 
         Returns:
-            tuple: (success, message, version, url, region) where:
+            tuple: (success, message, version, url, region, client) where:
                 - success: boolean indicating if the connection was successful
                 - message: string message about the connection status
                 - version: string version of OpenSearch if available, None otherwise
                 - url: string URL of the AWS OpenSearch endpoint
                 - region: string AWS region of the OpenSearch domain
+                - client: OpenSearch client if successful, None otherwise
         """
-
-        url = None
+        url = f"https://{host}"
+        is_serverless = ".aoss.amazonaws.com" in host
 
         try:
             # Determine if this is OpenSearch Service or OpenSearch Serverless
-            service_name = "aoss" if ".aoss." in host else "es"
-            # print(f"Using service name '{service_name}' for AWS authentication")
+            service = "aoss" if is_serverless else "es"
 
             # Get AWS credentials and region
             session = boto3.Session()
@@ -147,52 +164,41 @@ class VerifyCluster:
 
             if not credentials:
                 error_msg = "Unable to retrieve AWS credentials."
-                return False, error_msg, None, None, None
+                return False, error_msg, None, url, None
 
             if not region:
                 error_msg = "Unable to retrieve AWS region."
-                return False, error_msg, None, None, None
+                return False, error_msg, None, url, None
 
             # Create AWS authentication
-            auth = AWS4Auth(
+            aws_auth = AWS4Auth(
                 credentials.access_key,
                 credentials.secret_key,
                 region,
-                service_name,
+                service,
                 session_token=credentials.token,
             )
 
-            # Build the URL
-            url = f"https://{host}"
+            # Create OpenSearch client
+            client = OpenSearch(
+                hosts=[url],
+                http_auth=aws_auth,
+                use_ssl=True,
+                verify_certs=True,
+                connection_class=RequestsHttpConnection,
+            )
 
-            # Make the request
-            response = requests.get(url, auth=auth, timeout=10)
+            # Get cluster info
+            info = client.info()
 
-            # Check the response
-            if response.status_code == 200:
+            # Extract version (serverless is versionless)
+            version = "Serverless" if is_serverless else info["version"]["number"]
 
-                # Try to parse the response to get version information
-                version = None
-                try:
-                    data = response.json()
-                    if "version" in data and "number" in data["version"]:
-                        version = data["version"]["number"]
-                except Exception:
-                    pass
+            return True, "success", version, url, region, client
 
-                return True, "success", version, url, region
-            if response.status_code == 403:
-                error_msg = f"Forbidden 403 please verify your permissions/tokens/keys."
-                return False, error_msg, None, url, region
-            else:
-                error_msg = f"{response.status_code}"
-                return False, error_msg, None, url, region
-
+        except (ConnectionError, Exception) as e:
+            error_msg = f"Unable to connect {url}"
+            return False, error_msg, None, url, None, None
         except Exception as e:
-            err_str = str(e)
-            # print(err_str)
-            if "AWS_SECRET_ACCESS_KEY" in err_str:
-                error_msg = "missing AWS_SECRET_ACCESS_KEY"
-            else:
-                error_msg = f"Unable to connect AWS server - {url}.\nPlease check your AWS Credentials/Configurations"
-            return False, error_msg, None, url, None
+            error_msg = f"AWS Connection Verification ERROR: {str(e)}"
+            return False, error_msg, None, url, None, None

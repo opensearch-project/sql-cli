@@ -73,7 +73,7 @@ class TestVerifyCluster:
                 None,
                 True,
                 False,
-                "Unautorized 401",
+                "Unable to connect",
             ),
             (
                 4,
@@ -85,7 +85,7 @@ class TestVerifyCluster:
                 "wrong",
                 True,
                 False,
-                "Unautorized 401",
+                "Unable to connect",
             ),
         ],
     )
@@ -117,7 +117,7 @@ class TestVerifyCluster:
             # Store the input username to compare with the returned username
             input_username = username
 
-            success, message, version, url, returned_username = (
+            success, message, version, url, returned_username, client = (
                 VerifyCluster.verify_opensearch_connection(
                     host, port, protocol, username, password, ignore_ssl
                 )
@@ -160,7 +160,7 @@ class TestVerifyCluster:
                 True,
                 "us-west-2",
                 False,
-                "Forbidden 403 please verify your permissions/tokens/keys.",
+                "Unable to connect",
             ),
         ],
     )
@@ -188,7 +188,7 @@ class TestVerifyCluster:
 
         # Use VCR for all test cases
         with my_vcr.use_cassette(cassette_name):
-            success, message, version, url, region = (
+            success, message, version, url, region, client = (
                 VerifyCluster.verify_aws_opensearch_connection(host)
             )
             print(

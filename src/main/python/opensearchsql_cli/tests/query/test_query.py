@@ -129,7 +129,9 @@ class TestQuery:
                 mock_print.assert_any_call("[bold red]Index does not exist[/bold red]")
                 print("Index does not exist")
             elif '"statement" is null' in mock_response:
-                mock_print.assert_any_call("[bold red]Statement is null[/bold red]")
+                mock_print.assert_any_call(
+                    "[bold red]Error: [/bold red][red]Could not parse the query. Please check the syntax and try again.[/red]"
+                )
                 print("Statement is null")
 
         # Verify all calls to mock_print

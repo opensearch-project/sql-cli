@@ -43,6 +43,7 @@ class SqlConnection:
         # Store OpenSearch verification results
         self.cluster_version = None
         self.url = None
+        self.client = None
 
     def verify_opensearch_connection(
         self, host_port=None, username_password=None, ignore_ssl=False, aws_auth=False
@@ -80,7 +81,7 @@ class SqlConnection:
                 self.host = host_port
 
                 # Verify AWS connection
-                success, message, cluster_version, url, region = (
+                success, message, cluster_version, url, region, client = (
                     VerifyCluster.verify_aws_opensearch_connection(host_port)
                 )
                 if not success:
@@ -90,6 +91,7 @@ class SqlConnection:
                 # Store connection information
                 self.cluster_version = cluster_version
                 self.url = url
+                self.client = client
                 self.username = (
                     f"{region}"  # Use region as the "username" for AWS connections
                 )
@@ -119,7 +121,7 @@ class SqlConnection:
                         self.port_num = 443
 
                 # Verify connection using parsed values
-                success, message, cluster_version, url, username = (
+                success, message, cluster_version, url, username, client = (
                     VerifyCluster.verify_opensearch_connection(
                         self.host,
                         self.port_num,
@@ -136,6 +138,7 @@ class SqlConnection:
                 # Store connection information
                 self.cluster_version = cluster_version
                 self.url = url
+                self.client = client
                 if username:
                     self.username = username
 

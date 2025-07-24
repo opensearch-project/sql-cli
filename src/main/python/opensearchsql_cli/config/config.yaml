@@ -54,7 +54,7 @@ SqlSettings:
   # CALCITE_PUSHDOWN_ENABLED: Whether to enable pushdown optimization in Calcite
   # CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR: Factor for row count estimation in pushdown
   # SQL_CURSOR_KEEP_ALIVE: Time to keep cursor alive in minutes
-  QUERY_SIZE_LIMIT: 99999
+  QUERY_SIZE_LIMIT: 200
   FIELD_TYPE_TOLERANCE: true
   CALCITE_ENGINE_ENABLED: true
   CALCITE_FALLBACK_ALLOWED: true

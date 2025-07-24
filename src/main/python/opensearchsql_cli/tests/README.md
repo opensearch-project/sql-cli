@@ -95,6 +95,7 @@ filterwarnings =
     ignore:pkg_resources is deprecated as an API:DeprecationWarning
     ignore:The 'is_flag' and 'flag_value' parameters are not supported by Typer:DeprecationWarning
     ignore:datetime.datetime.utcnow.*:DeprecationWarning
+    ignore:Connecting to .* using SSL with verify_certs=False is insecure:UserWarning
 ```
 
 These filters suppress deprecation warnings from third-party libraries that are used in the project but are not directly related to the functionality being tested.

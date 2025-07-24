@@ -16,7 +16,7 @@ def mock_process():
     Fixture that returns a mock subprocess.Popen instance.
     """
     mock = MagicMock()
-    mock.stdout.readline.return_value = "Gateway Server Started"
+    mock.stdout.readline.side_effect = ["Gateway Server Started"]
     mock.poll.return_value = None
     return mock
 
@@ -27,7 +27,8 @@ def mock_process_timeout():
     Fixture that returns a mock subprocess.Popen instance that times out.
     """
     mock = MagicMock()
-    mock.stdout.readline.return_value = "Some other output"
+    mock.stdout.readline.side_effect = ["Some other output"]
+    mock.poll.return_value = None
     return mock
 
 
