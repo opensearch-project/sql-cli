@@ -17,7 +17,12 @@ install_requirements = [
     "shellingham==1.5.4",
     "typer==0.16.0",
     "typing_extensions==4.14.1",
-    "opensearch-py==3.0.0"
+    "opensearch-py==3.0.0",
+    "requests==2.32.4",
+    "requests-aws4auth==1.3.1",
+    "beautifulsoup4==4.13.4",
+    "packaging==25.0",
+    "lxml==6.0.0",
     # Java Gateway Python
     "py4j==0.10.9.9",
 ]

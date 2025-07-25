@@ -37,6 +37,7 @@ class TestSqlVersion:
         rebuild,
         jar_exists,
         expected_result,
+        mock_get_all_versions,
     ):
         """
         Test cases for SQL version selection
@@ -44,6 +45,14 @@ class TestSqlVersion:
         # Setup mocks
         mock_exists.return_value = jar_exists
         mock_join.return_value = "/mock/path/opensearchsql-v3.1.0.0.jar"
+
+        # For failure cases, ensure the requested version is not in the list
+        if test_id != 1:
+            mock_get_all_versions.return_value = [
+                v
+                for v in mock_get_all_versions.return_value
+                if not v.startswith(version)
+            ]
 
         # Create version manager and set version
         version_manager = SqlVersion()
@@ -74,11 +83,23 @@ class TestSqlVersion:
     @patch("opensearchsql_cli.sql.sql_version.console")
     @patch("opensearchsql_cli.sql.sql_version.open", create=True)
     def test_rebuild_jar(
-        self, mock_open, mock_console, mock_run, mock_join, mock_exists
+        self,
+        mock_open,
+        mock_console,
+        mock_run,
+        mock_join,
+        mock_exists,
+        mock_get_all_versions,
     ):
         """
         Test rebuilding JAR file
         """
+        # Make sure version is in the list of available versions
+        if "3.1.0.0" not in mock_get_all_versions.return_value:
+            mock_get_all_versions.return_value = [
+                "3.1.0.0"
+            ] + mock_get_all_versions.return_value
+
         # Setup mocks to simulate JAR not existing initially but created after build
         mock_exists.side_effect = [
             False,
@@ -109,7 +130,10 @@ class TestSqlVersion:
         )
 
     @patch("opensearchsql_cli.sql.sql_version.os.path.join")
-    def test_get_jar_path(self, mock_join):
+    def test_get_jar_path(
+        self,
+        mock_join,
+    ):
         """
         Test getting JAR path
         """

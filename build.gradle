@@ -7,19 +7,100 @@ plugins {
 }
 
 java {
-    toolchain { languageVersion = JavaLanguageVersion.of(21)}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+application {
+    mainClass = 'Gateway'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://aws.oss.sonatype.org/content/repositories/snapshots/"
+    }
+    maven {
+        url "https://jitpack.io"
+    }
+}
+
+ext {
+    submodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol']
+
+    sharedDeps = [
+        // will need to publish datasources submodule into the maven 
+        // right now, will have to use it locally
+        files('/Users/cnoramut/Documents/GitHub/sql/datasources/build/libs/datasources-3.1.0.0-SNAPSHOT.jar'),
+        // OpenSearch
+        'org.apache.calcite:calcite-core:1.40.0',
+        'com.facebook.presto:presto-matching:0.293',
+        'org.antlr:antlr4-runtime:4.7.1',
+        'org.apache.commons:commons-lang3:3.17.0',
+        'org.reactivestreams:reactive-streams:1.0.4',
+        'com.google.guava:guava:32.4.8-jre',
+        // for OpenSearchRestClientImpl.java
+        'org.projectlombok:lombok:1.18.38',
+        // HTTP5 
+        'org.apache.httpcomponents.core5:httpcore5:5.2',
+        'org.apache.httpcomponents.client5:httpclient5:5.2.1',
+        // AWS SDK v2 
+        'software.amazon.awssdk:sdk-core:2.31.63',
+        'software.amazon.awssdk:auth:2.31.63',
+        'software.amazon.awssdk:regions:2.31.63',
+        'software.amazon.awssdk:apache-client:2.31.63',
+        'software.amazon.awssdk:sts:2.31.63',
+        'software.amazon.awssdk:aws-core:2.31.63',
+        // AWS Interceptor
+        // 'io.github.acm19:aws-request-signing-apache-interceptor:3.0.0',
+        // Logging 
+        'org.apache.logging.log4j:log4j-core:2.25.0',
+        'org.apache.logging.log4j:log4j-api:2.25.0',
+        // Apache Commons Configuration for YAML file parsing
+        'org.apache.commons:commons-configuration2:2.12.0',
+        'commons-beanutils:commons-beanutils:1.11.0',
+        'org.yaml:snakeyaml:2.2',
+        // JSON  
+        'org.json:json:20250517',
+        'com.google.code.gson:gson:2.13.1',
+        // Guice, dependency injection
+        'com.google.inject:guice:7.0.0',
+        // Py4J
+        'net.sf.py4j:py4j:0.10.9.9'
+    ]
 }
 
 configurations {
     dev
     sharedDependency
-    v3_1_0_0
-    v2_19_0_0
 
-    // used in ./gradlew run, will remove after development
-    // implementation { extendsFrom sharedDependency, dev}
-    v31Runtime { extendsFrom sharedDependency, v3_1_0_0}
-    v219Runtime { extendsFrom sharedDependency, v2_19_0_0}
+    implementation {
+        extendsFrom sharedDependency
+    }
+}
+
+def getOpenSearchClientVersion(String version) {
+    def parts = version.split("\\.")
+    // 2.19.1 -> 2.19.0
+    if (parts.length >= 3) {
+        return "${parts[0]}.${parts[1]}.0"
+    }
+    return version
+}
+
+dependencies {
+
+    sharedDeps.each { d ->
+        sharedDependency d
+    }
+
+    // Add Lombok as an annotation processor
+    annotationProcessor 'org.projectlombok:lombok:1.18.38'
+}
+
+jar {
+    archiveBaseName.set("opensearchsql")
 }
 
 compileJava {
@@ -34,12 +115,6 @@ applicationDefaultJvmArgs = [
     '--add-opens=java.base/java.io=ALL-UNNAMED',
     '--add-opens=java.base/sun.misc=ALL-UNNAMED'
 ]
-
-repositories {
-    mavenCentral()
-    maven { url "https://aws.oss.sonatype.org/content/repositories/snapshots/"}
-    maven { url "https://jitpack.io"}
-}
 
 spotless {
     java {
@@ -59,77 +134,33 @@ spotless {
     }
 }
 
-def submodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol']
-
-def sharedDeps = [
-    // will need to publish datasources submodule into the maven 
-    // right now, will have to use it locally
-    files('/Users/cnoramut/Documents/GitHub/sql/datasources/build/libs/datasources-3.1.0.0-SNAPSHOT.jar'),
-    // OpenSearch 
-    'org.opensearch.client:opensearch-rest-high-level-client:3.0.0',
-    'org.opensearch.client:opensearch-rest-client:3.0.0',
-    'org.opensearch.client:opensearch-java:3.0.0',
-    'org.apache.calcite:calcite-core:1.40.0',
-    'com.facebook.presto:presto-matching:0.293',
-    'org.antlr:antlr4-runtime:4.7.1',
-    'org.apache.commons:commons-lang3:3.17.0',
-    'org.reactivestreams:reactive-streams:1.0.4',
-    'com.google.guava:guava:32.4.8-jre',
-    // for OpenSearchRestClientImpl.java
-    'org.projectlombok:lombok:1.18.38',
-    // HTTP5 
-    'org.apache.httpcomponents.core5:httpcore5:5.2',
-    'org.apache.httpcomponents.client5:httpclient5:5.2.1',
-    // AWS SDK v2 
-    'software.amazon.awssdk:sdk-core:2.31.63',
-    'software.amazon.awssdk:auth:2.31.63',
-    'software.amazon.awssdk:regions:2.31.63',
-    'software.amazon.awssdk:apache-client:2.31.63',
-    'software.amazon.awssdk:sts:2.31.63',
-    'software.amazon.awssdk:aws-core:2.31.63',
-    // AWS Interceptor
-    // 'io.github.acm19:aws-request-signing-apache-interceptor:3.0.0',
-    // Logging 
-    'org.apache.logging.log4j:log4j-core:2.25.0',
-    'org.apache.logging.log4j:log4j-api:2.25.0',
-    // Apache Commons Configuration for YAML file parsing
-    'org.apache.commons:commons-configuration2:2.12.0',
-    'commons-beanutils:commons-beanutils:1.11.0',
-    'org.yaml:snakeyaml:2.2',
-    // JSON  
-    'org.json:json:20250517',
-    'com.google.code.gson:gson:2.13.1',
-    // Guice, dependency injection
-    'com.google.inject:guice:7.0.0',
-    // Py4J
-    'net.sf.py4j:py4j:0.10.9.9'
-]
-
-dependencies {
-
-    submodules.each { name ->
-        dev files("/Users/cnoramut/Documents/GitHub/sql/${name}/build/libs/${name}-3.1.0.0-SNAPSHOT.jar")
-        v3_1_0_0 "org.opensearch.query:unified-query-${name}:3.1.0.0-SNAPSHOT"
-        v2_19_0_0 "org.opensearch.query:unified-query-${name}:2.19.0.0-SNAPSHOT"
-    }
-
-    sharedDeps.each { d ->
-        sharedDependency d
-    }
+shadowJar {
+    archiveBaseName.set("opensearchsql")
     
-    // Add Lombok as an annotation processor
-    annotationProcessor 'org.projectlombok:lombok:1.18.38'
-}
+    manifest {
+        attributes 'Main-Class': 'Gateway'
+    }
 
-application { mainClass = 'Gateway'}
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/*.EC'
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/MANIFEST.MF'
+
+    mergeServiceFiles()
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    zip64 = true
+}
 
 def createShadowJarTask(String taskName, String versionLabel, Configuration config) {
     tasks.register(taskName, com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-        archiveBaseName.set("opensearchsql-${versionLabel}")
+        archiveBaseName.set("opensearchsql-v${versionLabel}")
         configurations = [config]
         from(sourceSets.main.output)
 
-        manifest { attributes 'Main-Class': 'Gateway'}
+        manifest {
+            attributes 'Main-Class': 'Gateway'
+        }
 
         exclude 'META-INF/*.DSA'
         exclude 'META-INF/*.RSA'
@@ -143,6 +174,67 @@ def createShadowJarTask(String taskName, String versionLabel, Configuration conf
     }
 }
 
-createShadowJarTask("v3_1_0_0", "v3.1.0.0", configurations.v31Runtime)
-createShadowJarTask("v2_19_0_0", "v2.19.0.0", configurations.v219Runtime)
+ext.createVersionConfigurations = { String version ->
+    def configName = "v${version.replace('.', '_')}"
+    def runtimeConfigName = "${configName}_Runtime"
 
+    if (!configurations.findByName(configName)) {
+        configurations.create(configName)
+        configurations.create(runtimeConfigName) {
+            extendsFrom configurations.sharedDependency, configurations[configName]
+        }
+
+        // Add unified-query dependencies
+        project.ext.submodules.each { name ->
+            dependencies.add(configName, "org.opensearch.query:unified-query-${name}:${version}-SNAPSHOT")
+        }
+
+        // Add OpenSearch client dependencies with appropriate version
+        def clientVersion = getOpenSearchClientVersion(version)
+
+        def opensearchClientDeps = [
+            'opensearch-rest-high-level-client',
+            'opensearch-rest-client',
+            'opensearch-java'
+        ]
+        
+        opensearchClientDeps.each { dep ->
+            dependencies.add(configName, "org.opensearch.client:${dep}:${clientVersion}")
+        }
+        
+        println "Using OpenSearch client version ${clientVersion} for version ${version}"
+
+        createShadowJarTask(configName, version, configurations[runtimeConfigName])
+
+        println "Created configuration and task for version ${version}"
+    }
+
+    return configName
+}
+
+// Create default v3_1_0_0 configuration at build time
+def defaultConfigName = createVersionConfigurations("3.1.0.0")
+configurations.implementation.extendsFrom = [configurations.sharedDependency, configurations[defaultConfigName]] as Set
+
+tasks.register('setImplementationVersion') {
+    doLast {
+        def version = project.hasProperty('version') ? project.getProperty('version') : '3.1.0.0'
+        def configName = project.ext.createVersionConfigurations(version)
+
+        configurations.implementation.extendsFrom = [configurations.sharedDependency, configurations[configName]] as Set
+
+        println "Set implementation to use version ${version}"
+    }
+}
+
+// Use Gradle's task rules for dynamic task creation
+tasks.addRule("Pattern: v<version>: Creates a task for the specified version") { String taskName ->
+    if (taskName.startsWith("v") && taskName.count("_") >= 3) {
+        def version = taskName.substring(1).replace('_', '.')
+        def configName = project.ext.createVersionConfigurations(version)
+
+        configurations.implementation.extendsFrom = [configurations.sharedDependency, configurations[configName]] as Set
+
+        println "Set implementation to use version ${version}"
+    }
+}

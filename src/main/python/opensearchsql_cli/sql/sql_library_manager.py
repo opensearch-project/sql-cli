@@ -136,17 +136,10 @@ class SqlLibraryManager:
                 f"Initializing SQL Library at {time.strftime('%Y-%m-%d %H:%M:%S')}"
             )
 
-            # if get version from -v or config
-            if sql_version.version:
-                # Use the JAR file according to Sql plugin version
-                jar_path = sql_version.get_jar_path(project_root)
-                cmd = ["java", "-jar", jar_path, "Gateway"]
-                self.logger.info(f"Using JAR file: {jar_path}")
-            # else:
-            #     # Use Gradle to run the Gateway class (for development)
-            #     # this will be removed and use 3.1 as default
-            #     cmd = ["./gradlew", "run", "--args=Gateway"]
-            #     self.logger.info("Using ./gradlew run for development")
+            jar_path = sql_version.get_jar_path(project_root)
+            
+            cmd = ["java", "-jar", jar_path, "Gateway"]
+            self.logger.info(f"Using JAR file: {jar_path}")
 
             self.logger.info(f"Command: {' '.join(cmd)}")
 

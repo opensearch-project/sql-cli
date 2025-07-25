@@ -7,6 +7,9 @@ Handles version selection for OpenSearch CLI.
 import os
 import re
 import subprocess
+import requests
+from bs4 import BeautifulSoup
+from packaging import version
 from rich.console import Console
 from rich.status import Status
 
@@ -23,8 +26,56 @@ class SqlVersion:
         """
         Initialize the SQL Version manager
         """
-        self.version = "3.1.0.0"  # Default version
-        self.available_versions = ["3.1.0.0", "2.19.0.0"]
+        self.available_versions = self.get_all_versions()
+        # Default version is the highest version number
+        self.version = self.get_latest_version()
+
+    def get_all_versions(self):
+        """
+        Get all available versions from the repository website
+
+        Returns:
+            list: List of all available versions
+        """
+        url = "https://aws.oss.sonatype.org/content/repositories/snapshots/org/opensearch/query/unified-query-core/maven-metadata.xml"
+
+        response = requests.get(url)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.text, features="xml")
+
+        versions = []
+
+        # Extract version tags from XML
+        for version_tag in soup.find_all("version"):
+            version_str = version_tag.text
+            version_str = version_str.replace("-SNAPSHOT", "")
+            versions.append(version_str)
+
+        return versions
+
+    def get_latest_version(self):
+        """
+        Get the latest version from the repository website
+
+        Returns:
+            str: The latest version string or None if no versions found
+        """
+        versions = self.get_all_versions()
+
+        if not versions:
+            return None
+
+        try:
+            parsed_versions = [(v, version.parse(v)) for v in versions]
+            # Sort by parsed version objects with descending order
+            parsed_versions.sort(key=lambda x: x[1], reverse=True)
+
+            return parsed_versions[0][0]
+        except Exception as e:
+            # Falling back to string sorting
+            versions.sort(reverse=True)
+            return versions[0]
 
     def set_version(self, version, rebuild=False):
         """

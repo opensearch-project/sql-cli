@@ -54,3 +54,13 @@ def mock_sql_library_manager():
     mock.started = True
     mock.start.return_value = True
     return mock
+
+
+# Fixtures for test_sql_version.py
+@pytest.fixture
+def mock_get_all_versions():
+    """Mock the get_all_versions method to return a fixed list of versions."""
+    with patch("opensearchsql_cli.sql.sql_version.SqlVersion.get_all_versions") as mock:
+        mock.return_value = ["3.1.0.0", "2.19.0.0"]
+        yield mock
+

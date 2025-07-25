@@ -152,6 +152,11 @@ class OpenSearchSQLCLI:
                     success = sql_version.set_version(config_version, rebuild)
                     if not success:
                         return
+                else:
+                    # Use the default latest version if version nor config provided
+                    success = sql_version.set_version(sql_version.version, rebuild)
+                    if not success:
+                        return
 
             # Get defaults from config if not provided
             if language is None:
