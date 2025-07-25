@@ -161,7 +161,7 @@ class OpenSearchSQLCLI:
 
             # Initialize OpenSearch connection
             if endpoint is None or endpoint == "":
-                host_port = config_manager.get("Connection", "endpoint", "")
+                host_port = config_manager.get("Connection", "endpoint", "localhost")
             else:
                 host_port = endpoint
 

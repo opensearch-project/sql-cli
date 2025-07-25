@@ -52,13 +52,14 @@ class Config:
         Args:
             section: Configuration section
             key: Configuration key
-            default: Default value if key doesn't exist
+            default: Default value if key doesn't exist or is empty
 
         Returns:
-            Value for the key or default if not found
+            Value for the key or default if not found or empty
         """
         try:
-            return self.config.get(section, {}).get(key, default)
+            value = self.config.get(section, {}).get(key, default)
+            return value if value != "" else default
         except (AttributeError, KeyError):
             return default
 

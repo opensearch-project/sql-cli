@@ -17,7 +17,7 @@ Connection:
   # If not providing port number after ":"
   # By default: HTTP port is 9200
   #             HTTPS port is 443
-  endpoint: "localhost"
+  endpoint: ""
   
   # Authentication credentials are necessary for HTTPS
   # Must do "" as a string
@@ -37,8 +37,8 @@ Query:
   # Default output format: Table, JSON, CSV 
   # Set to true for vertical table display mode
   # OpenSearch SQL plugin version, must do "" as a string
-  language: "ppl"
-  format: "table"
+  language: ""
+  format: ""
   vertical: false
   version: ""
 
