@@ -36,6 +36,9 @@ class SqlVersion:
         self.available_versions = self.get_all_versions()
         # Default version is the highest version number
         self.version = self.get_latest_version()
+        # Default to HTTP5 for version 3.x and above
+        # HTTP4 for older versions
+        self.use_http5 = self._should_use_http5(self.version)
 
     def get_all_versions(self):
         """
@@ -89,49 +92,45 @@ class SqlVersion:
         Set the version of OpenSearch to use
 
         Args:
-            version: Version string (e.g., "3.1", "2.19")
+            version: Version string (e.g., "3.1", "3.0.0.0-alpha1")
             rebuild: If True, rebuild the JAR even if it exists
 
         Returns:
             bool: True if version is valid, False otherwise
         """
-
-        # Validate version format first
-        if not re.match(r"^[0-9]+(\.[0-9]+)*$", version):
-            invalid = True
+        # Check if the version contains a suffix (like -alpha1)
+        if "-" in version:
+            # For versions with suffixes, use as is
+            self.version = version
         else:
-            # Add trailing zeros to make 4 parts
+            # For simple versions, add trailing zeros to make 4 parts
             parts = version.split(".")
             while len(parts) < 4:
                 parts.append("0")
             self.version = ".".join(parts)
 
-            # Check if the version is available
-            invalid = self.version not in self.available_versions
+        # Update HTTP client version flag
+        self.use_http5 = self._should_use_http5(self.version)
+
+        # Check if the version is available
+        invalid = self.version not in self.available_versions
 
         if invalid:
-            # Prepare display versions (remove trailing zeros)
-            display_versions = []
-            for v in self.available_versions:
-                v_parts = v.split(".")
-                while v_parts and v_parts[-1] == "0":
-                    v_parts.pop()
-                display_versions.append(".".join(v_parts))
-
+            # Display available versions 
             console.print(
                 f"[bold red]\nERROR:[/bold red] [red]Version {version} is currently not supported.[/red]"
             )
             console.print(
-                f"[red]Available versions: {', '.join(display_versions)}\n[/red]"
+                f"[red]Available versions: {', '.join(self.available_versions)}\n[/red]"
             )
             return False
 
         # Check if the JAR file exists
         jar_path = self.get_jar_path()
 
-        # Create gradle task name with underscores (e.g., "2.19.1.0" -> "v2_19_1_0")
+        # Create gradle task name with underscores (e.g., "2.19.1.0" -> "2_19_1_0")
         version_parts = self.version.split(".")
-        gradle_task = f"v{version_parts[0]}_{version_parts[1]}_{version_parts[2]}_{version_parts[3]}"
+        gradle_task = f"{version_parts[0]}_{version_parts[1]}_{version_parts[2]}_{version_parts[3]}"
 
         # If rebuild is requested or the JAR doesn't exist
         if rebuild or not os.path.exists(jar_path):
@@ -180,8 +179,26 @@ class SqlVersion:
             str: Path to the JAR file
         """
         return os.path.join(
-            PROJECT_ROOT, "build", "libs", f"opensearchsql-v{self.version}.jar"
+            PROJECT_ROOT, "build", "libs", f"opensearchsql-{self.version}.jar"
         )
+
+    def _should_use_http5(self, version_str):
+        """
+        Determine if HTTP5 should be used based on version
+
+        Args:
+            version_str: Version string
+
+        Returns:
+            bool: True if HTTP5 should be used, False for HTTP4
+        """
+        try:
+            major_version = int(version_str.split(".")[0])
+            # Use HTTP5 for version 3.x and above
+            return major_version >= 3
+        except (ValueError, IndexError):
+            # Default to HTTP5 if version parsing fails
+            return True
 
 
 # Create a global instance

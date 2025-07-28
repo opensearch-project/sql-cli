@@ -23,6 +23,7 @@ install_requirements = [
     "beautifulsoup4==4.13.4",
     "packaging==25.0",
     "lxml==6.0.0",
+    "urllib3>=2.5.0",
     # Java Gateway Python
     "py4j==0.10.9.9",
 ]

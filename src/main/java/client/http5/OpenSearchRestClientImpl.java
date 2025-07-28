@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.RequiredArgsConstructor;
 import org.opensearch.action.admin.cluster.settings.ClusterGetSettingsRequest;
 import org.opensearch.action.admin.indices.settings.get.GetSettingsRequest;
 import org.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
@@ -50,11 +49,14 @@ import org.opensearch.transport.client.node.NodeClient;
  *
  * <p>TODO: Support for authN and authZ with AWS Sigv4 or security plugin.
  */
-@RequiredArgsConstructor
 public class OpenSearchRestClientImpl implements OpenSearchClient {
 
   /** OpenSearch high level REST client. */
   private final RestHighLevelClient client;
+
+  public OpenSearchRestClientImpl(RestHighLevelClient client) {
+    this.client = client;
+  }
 
   @Override
   public boolean exists(String indexName) {

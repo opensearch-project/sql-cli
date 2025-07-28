@@ -44,7 +44,7 @@ class TestSqlVersion:
         """
         # Setup mocks
         mock_exists.return_value = jar_exists
-        mock_join.return_value = "/mock/path/opensearchsql-v3.1.0.0.jar"
+        mock_join.return_value = "/mock/path/opensearchsql-3.1.0.0.jar"
 
         # For failure cases, ensure the requested version is not in the list
         if test_id != 1:
@@ -111,7 +111,7 @@ class TestSqlVersion:
             if args[-1] == "build.log":
                 return "/mock/path/build.log"
             else:
-                return "/mock/path/opensearchsql-v3.1.0.0.jar"
+                return "/mock/path/opensearchsql-3.1.0.0.jar"
 
         mock_join.side_effect = join_side_effect
         mock_run.return_value = MagicMock(returncode=0)
@@ -126,7 +126,7 @@ class TestSqlVersion:
         assert result is True
         mock_run.assert_called_once()
         mock_console.print.assert_any_call(
-            "[bold green]SUCCESS:[/bold green] [green]Built v3.1.0.0 successfully at /mock/path/opensearchsql-v3.1.0.0.jar[/green]"
+            "[bold green]SUCCESS:[/bold green] [green]Built v3.1.0.0 successfully at /mock/path/opensearchsql-3.1.0.0.jar[/green]"
         )
 
     @patch("opensearchsql_cli.sql.sql_version.PROJECT_ROOT", "/mock/project_root")
@@ -139,7 +139,7 @@ class TestSqlVersion:
         Test getting JAR path
         """
         # Setup mock
-        expected_path = "/mock/project_root/build/libs/opensearchsql-v3.1.0.0.jar"
+        expected_path = "/mock/project_root/build/libs/opensearchsql-3.1.0.0.jar"
         mock_join.return_value = expected_path
 
         # Create version manager and get JAR path
@@ -149,5 +149,5 @@ class TestSqlVersion:
         # Assertions
         assert path == expected_path
         mock_join.assert_called_with(
-            "/mock/project_root", "build", "libs", "opensearchsql-v3.1.0.0.jar"
+            "/mock/project_root", "build", "libs", "opensearchsql-3.1.0.0.jar"
         )

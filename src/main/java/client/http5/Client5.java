@@ -34,8 +34,11 @@ import software.amazon.awssdk.http.auth.aws.signer.AwsV4HttpSigner;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 
-/** Client class for creating OpenSearch clients with different authentication methods. */
-public class Client {
+/**
+ * Client class for creating OpenSearch clients with different authentication methods using HTTP5
+ * for OpenSearch SQL plug-in version 3
+ */
+public class Client5 {
 
   public static OpenSearchClient createAwsClient(String awsEndpoint) {
     try {
@@ -91,13 +94,13 @@ public class Client {
           RestClient.builder(host)
               .setHttpClientConfigCallback(
                   httpClientBuilder -> {
-                    httpClientBuilder.addRequestInterceptorFirst(newShowURI);
-                    httpClientBuilder.addRequestInterceptorLast(interceptor);
-                    httpClientBuilder.addRequestInterceptorLast(loggingInterceptor);
-                    return httpClientBuilder;
+                    return httpClientBuilder
+                        .addRequestInterceptorFirst(newShowURI)
+                        .addRequestInterceptorLast(interceptor)
+                        .addRequestInterceptorLast(loggingInterceptor);
                   });
 
-      // Use the builder for the high-level client
+      // Create RestHighLevelClient
       RestHighLevelClient restHighLevelClient = new RestHighLevelClient(restClientBuilder);
       return new OpenSearchRestClientImpl(restHighLevelClient);
     } catch (Exception e) {
@@ -110,7 +113,7 @@ public class Client {
     try {
       final HttpHost httpHost = new HttpHost("https", host, port);
 
-      // For HTTPS: Set up credentials and SSL
+      // Set up credentials
       final BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
       if (username != null && password != null) {
         credentialsProvider.setCredentials(

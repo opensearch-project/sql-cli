@@ -9,6 +9,7 @@ import sys
 from rich.console import Console
 from .sql_library_manager import sql_library_manager
 from .verify_cluster import VerifyCluster
+from .sql_version import sql_version
 from ..config.config import config_manager
 
 # Create a console instance for rich formatting
@@ -173,9 +174,15 @@ class SqlConnection:
                 return False
 
         try:
+            # Get HTTP version flag from sql_version
+            use_http5 = sql_version.use_http5
+
             # Initialize the connection in Java based on the verification results
             if aws_auth:
-                result = self.sql_lib.entry_point.initializeAwsConnection(self.host)
+                result = self.sql_lib.entry_point.initializeAwsConnection(
+                    self.host,
+                    use_http5,
+                )
             else:
                 result = self.sql_lib.entry_point.initializeConnection(
                     self.host,
@@ -184,6 +191,7 @@ class SqlConnection:
                     self.username,
                     self.password,
                     ignore_ssl,
+                    use_http5,
                 )
 
             # Check for successful initialization

@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import client.http5.Client;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -61,9 +61,16 @@ public class GatewayModule extends AbstractModule {
   private final boolean useAwsAuth;
   private final String awsEndpoint;
   private final String awsRegion;
+  private final boolean useHttp5;
 
   public GatewayModule(
-      String host, int port, String protocol, String username, String password, boolean ignoreSSL) {
+      String host,
+      int port,
+      String protocol,
+      String username,
+      String password,
+      boolean ignoreSSL,
+      boolean useHttp5) {
     this.host = host;
     this.port = port;
     this.protocol = protocol;
@@ -73,9 +80,10 @@ public class GatewayModule extends AbstractModule {
     this.useAwsAuth = false;
     this.awsEndpoint = null;
     this.awsRegion = null;
+    this.useHttp5 = useHttp5;
   }
 
-  public GatewayModule(String awsEndpoint) {
+  public GatewayModule(String awsEndpoint, boolean useHttp5) {
     this.host = null;
     this.port = 0;
     this.protocol = null;
@@ -85,6 +93,7 @@ public class GatewayModule extends AbstractModule {
     this.useAwsAuth = true;
     this.awsEndpoint = awsEndpoint;
     this.awsRegion = null;
+    this.useHttp5 = useHttp5;
   }
 
   @Override
@@ -93,18 +102,32 @@ public class GatewayModule extends AbstractModule {
   @Provides
   public OpenSearchClient openSearchClient() {
     try {
+      // Determine which client class to use based on useHttp5 flag
+      String clientClassName = useHttp5 ? "client.http5.Client5" : "client.http4.Client4";
+      Class<?> clientClass = Class.forName(clientClassName);
+
       if (useAwsAuth) {
-        // Use AWS authentication
-        return Client.createAwsClient(awsEndpoint);
-      } else if (protocol.equalsIgnoreCase("https")) {
-        // Use HTTPS authentication
-        return Client.createHttpsClient(host, port, username, password, ignoreSSL);
+        // Call createAwsClient(awsEndpoint)
+        Method method = clientClass.getMethod("createAwsClient", String.class);
+        return (OpenSearchClient) method.invoke(null, awsEndpoint);
+      } else if (protocol != null && protocol.equalsIgnoreCase("https")) {
+        // Call createHttpsClient(host, port, username, password, ignoreSSL)
+        Method method =
+            clientClass.getMethod(
+                "createHttpsClient",
+                String.class,
+                int.class,
+                String.class,
+                String.class,
+                boolean.class);
+        return (OpenSearchClient) method.invoke(null, host, port, username, password, ignoreSSL);
       } else {
-        // Use HTTP authentication
-        return Client.createHttpClient(host, port);
+        // Call createHttpClient(host, port)
+        Method method = clientClass.getMethod("createHttpClient", String.class, int.class);
+        return (OpenSearchClient) method.invoke(null, host, port);
       }
     } catch (Exception e) {
-      throw new RuntimeException("Failed to create OpenSearchClient", e);
+      throw new RuntimeException("Failed to create OpenSearchClient: " + e.getMessage(), e);
     }
   }
 

@@ -22,22 +22,22 @@ public class Gateway {
     // Empty constructor - services will be initialized when OpenSearch CLI connects
   }
 
-  public synchronized boolean initializeAwsConnection(String hostPort) {
+  public synchronized boolean initializeAwsConnection(String hostPort, boolean useHttp5) {
     // hostPort is the AWS OpenSearch endpoint (without https://)
     Region region = new DefaultAwsRegionProviderChain().getRegion();
 
     try {
-      System.out.println(
-          "Initializing AWS connection to OpenSearch at " + hostPort + " in region " + region);
 
-      Injector injector = Guice.createInjector(new GatewayModule(hostPort));
+      Injector injector = Guice.createInjector(new GatewayModule(hostPort, useHttp5));
 
       // Initialize services
       this.pplService = injector.getInstance(PPLService.class);
       this.sqlService = injector.getInstance(SQLService.class);
       this.queryExecution = injector.getInstance(QueryExecution.class);
 
-      System.out.println("Successfully initialized AWS connection to " + hostPort);
+      System.out.println(
+          "Initialized AWS connection to OpenSearch at " + hostPort + " in region " + region + ".");
+      System.out.println("Using HTTP" + (useHttp5 ? "5" : "4") + " for the connection.");
 
       return true;
 
@@ -48,16 +48,19 @@ public class Gateway {
   }
 
   public synchronized boolean initializeConnection(
-      String host, int port, String protocol, String username, String password, boolean ignoreSSL) {
+      String host,
+      int port,
+      String protocol,
+      String username,
+      String password,
+      boolean ignoreSSL,
+      boolean useHttp5) {
 
     try {
 
-      System.out.println(
-          "Initializing connection to OpenSearch at " + protocol + "://" + host + ":" + port);
-
       Injector injector =
           Guice.createInjector(
-              new GatewayModule(host, port, protocol, username, password, ignoreSSL));
+              new GatewayModule(host, port, protocol, username, password, ignoreSSL, useHttp5));
 
       // Initialize services
       this.pplService = injector.getInstance(PPLService.class);
@@ -65,7 +68,9 @@ public class Gateway {
       this.queryExecution = injector.getInstance(QueryExecution.class);
 
       System.out.println(
-          "Successfully initialized connection to " + protocol + "://" + host + ":" + port);
+          "Initialized connection to OpenSearch at " + protocol + "://" + host + ":" + port + ".");
+      System.out.println("Using HTTP" + (useHttp5 ? "5" : "4") + " for the connection.");
+
       return true;
 
     } catch (Exception e) {
@@ -82,9 +87,6 @@ public class Gateway {
   public static void main(String[] args) {
     try {
       System.out.println("Starting Gateway Server...");
-      System.out.println(
-          "Waiting for OpenSearch CLI to connect and provide OpenSearch host:port"
-              + " configuration...");
 
       Gateway app = new Gateway();
 
@@ -94,7 +96,6 @@ public class Gateway {
 
       server.start();
       System.out.println("Gateway Server Started on port " + gatewayPort);
-      System.out.println("Ready to accept connections from OpenSearch CLI.");
     } catch (Exception e) {
       e.printStackTrace();
     }

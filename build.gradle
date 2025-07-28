@@ -26,9 +26,59 @@ repositories {
     }
 }
 
+// Helper function for version detection
+ext.getEffectiveVersion = { ->
+    // Look for task names with version format (e.g., 3_1_0_0 or 3_x)
+    def taskName = gradle.startParameter.taskNames.find { it.count("_") >= 1 && it.matches("[0-9].*") }
+    if (taskName != null) {
+        return taskName.replace('_', '.')
+    }
+    return project.hasProperty('version') ? project.getProperty('version') : null
+}
+
+ext.updateIsV3orAbove = { String version ->
+    project.ext.isV3orAbove = version?.startsWith("3") ?: false
+    return project.ext.isV3orAbove
+}
+
+ext.getOpenSearchClientVersion = { String version ->
+    def parts = version.split("\\.")
+    // 2.19.1 -> 2.19.0 format for OpenSearch client dependencies
+    if (parts.length >= 3) {
+        return "${parts[0]}.${parts[1]}.0"
+    }
+    return version
+}
+
+// Helper function to determine which HTTP client to use based on version
+ext.getHttpClientInfo = { ->
+    def result = [:]
+    
+    if (project.ext.isV3orAbove) {
+        result.clientName = "HTTP5"
+        result.sourceSet = sourceSets.http5
+        result.dependencies = configurations.http5Dependency
+    } else {
+        result.clientName = "HTTP4"
+        result.sourceSet = sourceSets.http4
+        result.dependencies = configurations.http4Dependency
+    }
+    
+    return result
+}
+
+
 ext {
     submodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol']
+    
+    // Global variable to determine if version is 3 or above
+    // Initialize with default value, will be updated when needed
+    isV3orAbove = false
+    
+    // Update isV3orAbove based on current version
+    updateIsV3orAbove(getEffectiveVersion())
 
+    // Common dependencies shared across all versions
     sharedDeps = [
         // will need to publish datasources submodule into the maven 
         // right now, will have to use it locally
@@ -40,11 +90,6 @@ ext {
         'org.apache.commons:commons-lang3:3.17.0',
         'org.reactivestreams:reactive-streams:1.0.4',
         'com.google.guava:guava:32.4.8-jre',
-        // for OpenSearchRestClientImpl.java
-        'org.projectlombok:lombok:1.18.38',
-        // HTTP5 
-        'org.apache.httpcomponents.core5:httpcore5:5.2',
-        'org.apache.httpcomponents.client5:httpclient5:5.2.1',
         // AWS SDK v2 
         'software.amazon.awssdk:sdk-core:2.31.63',
         'software.amazon.awssdk:auth:2.31.63',
@@ -52,8 +97,6 @@ ext {
         'software.amazon.awssdk:apache-client:2.31.63',
         'software.amazon.awssdk:sts:2.31.63',
         'software.amazon.awssdk:aws-core:2.31.63',
-        // AWS Interceptor
-        // 'io.github.acm19:aws-request-signing-apache-interceptor:3.0.0',
         // Logging 
         'org.apache.logging.log4j:log4j-core:2.25.0',
         'org.apache.logging.log4j:log4j-api:2.25.0',
@@ -69,52 +112,128 @@ ext {
         // Py4J
         'net.sf.py4j:py4j:0.10.9.9'
     ]
+    
+    // HTTP5 dependencies for v3 and above
+    http5Deps = [
+        'org.apache.httpcomponents.core5:httpcore5:5.2',
+        'org.apache.httpcomponents.client5:httpclient5:5.2.1'
+    ]
+    
+    // HTTP4 dependencies for below v3
+    http4Deps = [
+        'org.apache.httpcomponents:httpcore:4.4.16',
+        'org.apache.httpcomponents:httpclient:4.5.14',
+        'io.github.acm19:aws-request-signing-apache-interceptor:3.0.0'
+    ]
+    
+    
+    // JVM arguments for application and compilation
+    jvmArgs = [
+        '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+        '--add-opens=java.base/java.io=ALL-UNNAMED',
+        '--add-opens=java.base/sun.misc=ALL-UNNAMED'
+    ]
 }
 
 configurations {
-    dev
     sharedDependency
+    http4Dependency
+    http5Dependency
 
     implementation {
         extendsFrom sharedDependency
     }
 }
 
-def getOpenSearchClientVersion(String version) {
-    def parts = version.split("\\.")
-    // 2.19.1 -> 2.19.0
-    if (parts.length >= 3) {
-        return "${parts[0]}.${parts[1]}.0"
+// Define source sets
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+            // Base source set excludes both HTTP client implementations
+            exclude 'client/http4/**', 'client/http5/**'
+        }
     }
-    return version
+    
+    http4 {
+        java {
+            srcDirs = ['src/main/java']
+            // Include only common files and HTTP4 files
+            include 'client/http4/**'
+            include '**/*.java'
+            exclude 'client/http5/**'
+        }
+    }
+    
+    http5 {
+        java {
+            srcDirs = ['src/main/java']
+            // Include only common files and HTTP5 files
+            include 'client/http5/**'
+            include '**/*.java'
+            exclude 'client/http4/**'
+        }
+    }
 }
 
 dependencies {
-
     sharedDeps.each { d ->
         sharedDependency d
     }
-
-    // Add Lombok as an annotation processor
-    annotationProcessor 'org.projectlombok:lombok:1.18.38'
+    
+    http4Deps.each { d ->
+        http4Dependency d
+    }
+    
+    http5Deps.each { d ->
+        http5Dependency d
+    }
 }
 
 jar {
     archiveBaseName.set("opensearchsql")
 }
 
-compileJava {
-    options.compilerArgs += [
-        '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
-        '--add-opens=java.base/java.io=ALL-UNNAMED'
-    ]
+// Configure compile tasks for all source sets
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += project.ext.jvmArgs
 }
 
-applicationDefaultJvmArgs = [
-    '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
-    '--add-opens=java.base/java.io=ALL-UNNAMED',
-    '--add-opens=java.base/sun.misc=ALL-UNNAMED'
-]
+// Configure HTTP4 and HTTP5 compile tasks
+tasks.named('compileHttp4Java') {
+    classpath = configurations.http4Dependency + configurations.sharedDependency + sourceSets.main.compileClasspath
+    // Skip this task when using v3 or above
+    onlyIf { 
+            task -> 
+                def result = !project.ext.isV3orAbove
+                if (result) {
+                    println "Using HTTP4 client for version ${project.ext.getEffectiveVersion()}"
+                }
+                return result
+        }
+}
+
+tasks.named('compileHttp5Java') {
+    classpath = configurations.http5Dependency + configurations.sharedDependency + sourceSets.main.compileClasspath
+    // Skip this task when using below v3
+    onlyIf { 
+            task -> 
+                def result = project.ext.isV3orAbove
+                if (result) {
+                    println "Using HTTP5 client for version ${project.ext.getEffectiveVersion()}"
+                }
+                return result
+        }
+}
+
+// Configure the classes task to depend on the appropriate compile task
+tasks.named('classes').configure {
+    dependsOn {
+        project.ext.isV3orAbove ? ['compileHttp5Java'] : ['compileHttp4Java']
+    }
+}
+
+applicationDefaultJvmArgs = project.ext.jvmArgs
 
 spotless {
     java {
@@ -134,55 +253,64 @@ spotless {
     }
 }
 
-shadowJar {
-    archiveBaseName.set("opensearchsql")
-    
-    manifest {
-        attributes 'Main-Class': 'Gateway'
-    }
-
-    exclude 'META-INF/*.DSA'
-    exclude 'META-INF/*.RSA'
-    exclude 'META-INF/*.EC'
-    exclude 'META-INF/*.SF'
-    exclude 'META-INF/MANIFEST.MF'
-
-    mergeServiceFiles()
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    zip64 = true
-}
 
 def createShadowJarTask(String taskName, String versionLabel, Configuration config) {
     tasks.register(taskName, com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-        archiveBaseName.set("opensearchsql-v${versionLabel}")
+        archiveBaseName.set("opensearchsql-${versionLabel}")
         configurations = [config]
+        
+        // Include the main source set output
         from(sourceSets.main.output)
-
+        
+        // Include the appropriate HTTP client source set based on version
+        def httpClientInfo = project.ext.getHttpClientInfo()
+        from(httpClientInfo.sourceSet.output)
+        
+        // Configure shadow jar settings
         manifest {
             attributes 'Main-Class': 'Gateway'
         }
-
+        
+        // Exclude signature files to avoid conflicts
+        exclude 'META-INF/*.SF'
         exclude 'META-INF/*.DSA'
         exclude 'META-INF/*.RSA'
         exclude 'META-INF/*.EC'
         exclude 'META-INF/*.SF'
         exclude 'META-INF/MANIFEST.MF'
-
+        
         mergeServiceFiles()
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         zip64 = true
     }
 }
 
+// Helper function to configure runtime configuration based on version
+ext.configureRuntimeConfiguration = { String version, String configName, String dependencyConfigName ->
+    def httpClientInfo = project.ext.getHttpClientInfo()
+    
+    configurations[dependencyConfigName].extendsFrom(
+        configurations.sharedDependency, 
+        httpClientInfo.dependencies,
+        configurations[configName]
+    )
+    
+    println "Version ${version}: Using ${httpClientInfo.clientName} dependencies and source files"
+}
+
 ext.createVersionConfigurations = { String version ->
-    def configName = "v${version.replace('.', '_')}"
-    def runtimeConfigName = "${configName}_Runtime"
+    def configName = "${version.replace('.', '_')}"
+    def dependencyConfigName = "${configName}_Dependency"
 
     if (!configurations.findByName(configName)) {
         configurations.create(configName)
-        configurations.create(runtimeConfigName) {
-            extendsFrom configurations.sharedDependency, configurations[configName]
-        }
+        configurations.create(dependencyConfigName)
+        
+        // Update the global isV3orAbove variable
+        project.ext.updateIsV3orAbove(version)
+        
+        // Configure runtime configuration based on version
+        configureRuntimeConfiguration(version, configName, dependencyConfigName)
 
         // Add unified-query dependencies
         project.ext.submodules.each { name ->
@@ -190,7 +318,7 @@ ext.createVersionConfigurations = { String version ->
         }
 
         // Add OpenSearch client dependencies with appropriate version
-        def clientVersion = getOpenSearchClientVersion(version)
+        def clientVersion = project.ext.getOpenSearchClientVersion(version)
 
         def opensearchClientDeps = [
             'opensearch-rest-high-level-client',
@@ -202,39 +330,31 @@ ext.createVersionConfigurations = { String version ->
             dependencies.add(configName, "org.opensearch.client:${dep}:${clientVersion}")
         }
         
-        println "Using OpenSearch client version ${clientVersion} for version ${version}"
+        println "Version ${version}: Using OpenSearch client version ${clientVersion}"
 
-        createShadowJarTask(configName, version, configurations[runtimeConfigName])
+        // Create shadow jar task for this version
+        createShadowJarTask(configName, version, configurations[dependencyConfigName])
 
-        println "Created configuration and task for version ${version}"
+        println "Version ${version}: Created configuration and task name as ${configName}"
     }
 
     return configName
 }
 
-// Create default v3_1_0_0 configuration at build time
-def defaultConfigName = createVersionConfigurations("3.1.0.0")
-configurations.implementation.extendsFrom = [configurations.sharedDependency, configurations[defaultConfigName]] as Set
-
-tasks.register('setImplementationVersion') {
-    doLast {
-        def version = project.hasProperty('version') ? project.getProperty('version') : '3.1.0.0'
-        def configName = project.ext.createVersionConfigurations(version)
-
-        configurations.implementation.extendsFrom = [configurations.sharedDependency, configurations[configName]] as Set
-
-        println "Set implementation to use version ${version}"
-    }
-}
-
 // Use Gradle's task rules for dynamic task creation
-tasks.addRule("Pattern: v<version>: Creates a task for the specified version") { String taskName ->
-    if (taskName.startsWith("v") && taskName.count("_") >= 3) {
-        def version = taskName.substring(1).replace('_', '.')
+tasks.addRule("Pattern: <version>: Creates a task for the specified version") { String taskName ->
+    if (taskName.count("_") >= 1 && taskName.matches("[0-9].*")) {
+        def version = taskName.replace('_', '.')
         def configName = project.ext.createVersionConfigurations(version)
-
-        configurations.implementation.extendsFrom = [configurations.sharedDependency, configurations[configName]] as Set
-
-        println "Set implementation to use version ${version}"
+        
+        // Configure implementation directly
+        def httpClientInfo = project.ext.getHttpClientInfo()
+        configurations.implementation.extendsFrom = [
+            configurations.sharedDependency, 
+            httpClientInfo.dependencies, 
+            configurations[configName]
+        ] as Set
+        
+        println "Version ${version}: Set implementation configuration"
     }
 }

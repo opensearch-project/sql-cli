@@ -151,7 +151,7 @@ class VerifyCluster:
                 - client: OpenSearch client if successful, None otherwise
         """
         url = f"https://{host}"
-        is_serverless = ".aoss.amazonaws.com" in host
+        is_serverless = "aos" in host
 
         try:
             # Determine if this is OpenSearch Service or OpenSearch Serverless

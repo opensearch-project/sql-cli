@@ -81,19 +81,6 @@ public final class AwsRequestSigningApacheV5Interceptor implements HttpRequestIn
 
     // Print the request type
     System.out.println("AwsRequestSigningApacheV5Interceptor.process()");
-    System.out.println("Request type: " + request.getClass().getName());
-    System.out.println("Request method: " + request.getMethod());
-    System.out.println("Request URI: " + request.getRequestUri());
-
-    // Print entity details
-    System.out.println(
-        "Entity details: "
-            + (entityDetails != null
-                ? "Content type: "
-                    + entityDetails.getContentType()
-                    + ", Content length: "
-                    + entityDetails.getContentLength()
-                : "null"));
 
     if (request instanceof ClassicHttpRequest) {
       ClassicHttpRequest classicHttpRequest = (ClassicHttpRequest) request;
@@ -135,7 +122,7 @@ public final class AwsRequestSigningApacheV5Interceptor implements HttpRequestIn
           System.out.println("File does not exist at: " + path.toAbsolutePath());
         }
 
-        // Only proceed if dslQuery is not empty
+        // Only proceed if bodyContent is not empty
         if (!bodyContent.isEmpty()) {
           byte[] bodyBytes = bodyContent.getBytes(StandardCharsets.UTF_8);
           System.out.println("Byte added: " + bodyBytes.length);
