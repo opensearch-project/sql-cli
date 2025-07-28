@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package client.aws;
+package client.http5.aws;
 
 import java.io.IOException;
 import java.net.URI;

@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package client;
+package client.http5;
 
+import client.http5.aws.AwsRequestSigningApacheV5Interceptor;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import org.apache.hc.client5.http.auth.AuthScope;
@@ -69,8 +70,8 @@ public class Client {
             public void process(HttpRequest request, EntityDetails entity, HttpContext context) {
               // Create and apply the AWS SigV4 interceptor
               try {
-                client.aws.AwsRequestSigningApacheV5Interceptor awsInterceptor =
-                    new client.aws.AwsRequestSigningApacheV5Interceptor(
+                AwsRequestSigningApacheV5Interceptor awsInterceptor =
+                    new AwsRequestSigningApacheV5Interceptor(
                         serviceName, AwsV4HttpSigner.create(), credentialsProvider, region);
                 awsInterceptor.process(request, entity, context);
 
@@ -81,11 +82,11 @@ public class Client {
             }
           };
 
-      // Add our URI modification and logging interceptors
+      // Add URI modification and logging interceptors
       HttpRequestInterceptor newShowURI = createNewShowURI();
       HttpRequestInterceptor loggingInterceptor = createLoggingInterceptor(true);
 
-      // Build RestClientBuilder with interceptors
+      // Create RestClientBuilder with configurations
       RestClientBuilder restClientBuilder =
           RestClient.builder(host)
               .setHttpClientConfigCallback(
@@ -124,43 +125,44 @@ public class Client {
               .loadTrustMaterial(null, (chains, authType) -> ignoreSSL)
               .build();
 
-      // Create our interceptors
+      // Create interceptors
       HttpRequestInterceptor newShowURI = createNewShowURI();
       HttpRequestInterceptor loggingInterceptor = createLoggingInterceptor(true);
 
-      // Create RestHighLevelClient with SSL and authentication
-      final RestHighLevelClient restHighLevelClient =
-          new RestHighLevelClient(
-              RestClient.builder(httpHost)
-                  .setHttpClientConfigCallback(
-                      httpClientBuilder -> {
-                        // Set up TLS strategy
-                        final TlsStrategy tlsStrategy =
-                            ClientTlsStrategyBuilder.create()
-                                .setSslContext(sslContext)
-                                .setTlsDetailsFactory(
-                                    new Factory<SSLEngine, TlsDetails>() {
-                                      @Override
-                                      public TlsDetails create(final SSLEngine sslEngine) {
-                                        return new TlsDetails(
-                                            sslEngine.getSession(),
-                                            sslEngine.getApplicationProtocol());
-                                      }
-                                    })
-                                .build();
+      // Create a factory for TLS details
+      Factory<SSLEngine, TlsDetails> tlsDetailsFactory =
+          new Factory<SSLEngine, TlsDetails>() {
+            @Override
+            public TlsDetails create(final SSLEngine sslEngine) {
+              return new TlsDetails(sslEngine.getSession(), sslEngine.getApplicationProtocol());
+            }
+          };
 
-                        // Set up connection manager
-                        final PoolingAsyncClientConnectionManager connectionManager =
-                            PoolingAsyncClientConnectionManagerBuilder.create()
-                                .setTlsStrategy(tlsStrategy)
-                                .build();
+      // Build the TLS strategy using SSL context and factory
+      final TlsStrategy tlsStrategy =
+          ClientTlsStrategyBuilder.create()
+              .setSslContext(sslContext)
+              .setTlsDetailsFactory(tlsDetailsFactory)
+              .build();
 
-                        return httpClientBuilder
-                            .setDefaultCredentialsProvider(credentialsProvider)
-                            .setConnectionManager(connectionManager)
-                            .addRequestInterceptorFirst(newShowURI)
-                            .addRequestInterceptorLast(loggingInterceptor);
-                      }));
+      // Create a connection manager with TLS strategy
+      final PoolingAsyncClientConnectionManager connectionManager =
+          PoolingAsyncClientConnectionManagerBuilder.create().setTlsStrategy(tlsStrategy).build();
+
+      // Create RestClientBuilder with configurations
+      RestClientBuilder restClientBuilder =
+          RestClient.builder(httpHost)
+              .setHttpClientConfigCallback(
+                  httpClientBuilder -> {
+                    return httpClientBuilder
+                        .setDefaultCredentialsProvider(credentialsProvider)
+                        .setConnectionManager(connectionManager)
+                        .addRequestInterceptorFirst(newShowURI)
+                        .addRequestInterceptorLast(loggingInterceptor);
+                  });
+
+      // Create RestHighLevelClient
+      final RestHighLevelClient restHighLevelClient = new RestHighLevelClient(restClientBuilder);
 
       return new OpenSearchRestClientImpl(restHighLevelClient);
     } catch (Exception e) {
@@ -172,19 +174,22 @@ public class Client {
     try {
       final HttpHost httpHost = new HttpHost("http", host, port);
 
-      // Create our interceptors
+      // Create interceptors
       HttpRequestInterceptor newShowURI = createNewShowURI();
       HttpRequestInterceptor loggingInterceptor = createLoggingInterceptor(false);
 
-      RestHighLevelClient restHighLevelClient =
-          new RestHighLevelClient(
-              RestClient.builder(httpHost)
-                  .setHttpClientConfigCallback(
-                      httpClientBuilder -> {
-                        return httpClientBuilder
-                            .addRequestInterceptorFirst(newShowURI)
-                            .addRequestInterceptorLast(loggingInterceptor);
-                      }));
+      // Create RestClientBuilder with configurations
+      RestClientBuilder restClientBuilder =
+          RestClient.builder(httpHost)
+              .setHttpClientConfigCallback(
+                  httpClientBuilder -> {
+                    return httpClientBuilder
+                        .addRequestInterceptorFirst(newShowURI)
+                        .addRequestInterceptorLast(loggingInterceptor);
+                  });
+
+      // Create RestHighLevelClient
+      RestHighLevelClient restHighLevelClient = new RestHighLevelClient(restClientBuilder);
 
       return new OpenSearchRestClientImpl(restHighLevelClient);
     } catch (Exception e) {

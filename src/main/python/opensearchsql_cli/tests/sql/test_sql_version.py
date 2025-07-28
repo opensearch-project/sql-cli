@@ -129,6 +129,7 @@ class TestSqlVersion:
             "[bold green]SUCCESS:[/bold green] [green]Built v3.1.0.0 successfully at /mock/path/opensearchsql-v3.1.0.0.jar[/green]"
         )
 
+    @patch("opensearchsql_cli.sql.sql_version.PROJECT_ROOT", "/mock/project_root")
     @patch("opensearchsql_cli.sql.sql_version.os.path.join")
     def test_get_jar_path(
         self,
@@ -143,7 +144,7 @@ class TestSqlVersion:
 
         # Create version manager and get JAR path
         version_manager = SqlVersion()
-        path = version_manager.get_jar_path("/mock/project_root")
+        path = version_manager.get_jar_path()
 
         # Assertions
         assert path == expected_path

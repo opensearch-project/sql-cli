@@ -16,6 +16,15 @@ from datetime import datetime
 from .sql_version import sql_version
 from ..config.config import config_manager
 
+# sql-cli/src/main/python/opensearchsql_cli/sql
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# sql-cli/
+PROJECT_ROOT = os.path.normpath(os.path.join(current_dir, "../../../../../"))
+# Java directory: sql-cli/src/main/java
+JAVA_DIR = os.path.join(PROJECT_ROOT, "src", "main", "java")
+# AWS directory: sql-cli/src/main/java/client/http5/aws
+AWS_DIR = os.path.join(JAVA_DIR, "client", "http5", "aws")
+
 
 class SqlLibraryManager:
     """
@@ -101,23 +110,13 @@ class SqlLibraryManager:
                 if not self._kill_process_on_port():
                     return False
 
-            # sql-cli/src/main/python/opensearchsql_cli/sql
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            # sql-cli/
-            project_root = os.path.normpath(
-                os.path.join(current_dir, "../../../../../")
-            )
-
-            # Use the Java directory for logging
-            java_dir = os.path.join(project_root, "src", "main", "java")
-
             # Get log file path from config or use default
             config_log_file = config_manager.get("File", "sql_log", "")
             if config_log_file and config_log_file.strip():
                 log_file = config_log_file
             else:
                 # Use default log file path
-                log_file = os.path.join(java_dir, "sql_library.log")
+                log_file = os.path.join(JAVA_DIR, "sql_library.log")
 
             # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(log_file), exist_ok=True)
@@ -136,8 +135,8 @@ class SqlLibraryManager:
                 f"Initializing SQL Library at {time.strftime('%Y-%m-%d %H:%M:%S')}"
             )
 
-            jar_path = sql_version.get_jar_path(project_root)
-            
+            jar_path = sql_version.get_jar_path()
+
             cmd = ["java", "-jar", jar_path, "Gateway"]
             self.logger.info(f"Using JAR file: {jar_path}")
 
@@ -146,7 +145,7 @@ class SqlLibraryManager:
             # Start the process
             self.process = subprocess.Popen(
                 cmd,
-                cwd=project_root,
+                cwd=PROJECT_ROOT,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
@@ -245,6 +244,11 @@ class SqlLibraryManager:
                 self.output_thread = None
 
             self.started = False
+
+            aws_body_path = os.path.join(AWS_DIR, "aws_body.json")
+            if os.path.exists(aws_body_path):
+                os.remove(aws_body_path)
+                self.logger.info("Delete " + aws_body_path)
 
             if hasattr(self, "logger"):
                 self.logger.info("SQL Library resources cleaned up")

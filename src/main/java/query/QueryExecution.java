@@ -6,7 +6,6 @@
 package query;
 
 import com.google.inject.Inject;
-import java.nio.file.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -126,8 +125,6 @@ public class QueryExecution {
       }
 
       latch.await();
-
-      Files.deleteIfExists(Paths.get("src/main/java/client/aws/aws_body.json"));
 
       if (errorRef.get() != null) {
         errorRef.get().printStackTrace();

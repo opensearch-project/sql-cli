@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package client.aws;
+package client.http5.aws;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -121,7 +121,7 @@ public final class AwsRequestSigningApacheV5Interceptor implements HttpRequestIn
       // Only its metadata
       Set<String> methods = Set.of("POST", "DELETE");
       if (methods.contains(request.getMethod().toUpperCase())) {
-        Path path = Paths.get("src/main/java/client/aws/aws_body.json");
+        Path path = Paths.get("src/main/java/client/http5/aws/aws_body.json");
         String bodyContent = "";
 
         if (Files.exists(path)) {

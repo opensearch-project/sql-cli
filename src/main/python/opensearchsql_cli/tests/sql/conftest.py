@@ -63,4 +63,3 @@ def mock_get_all_versions():
     with patch("opensearchsql_cli.sql.sql_version.SqlVersion.get_all_versions") as mock:
         mock.return_value = ["3.1.0.0", "2.19.0.0"]
         yield mock
-

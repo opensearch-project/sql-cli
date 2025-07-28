@@ -16,6 +16,13 @@ from rich.status import Status
 # Create a console instance for rich formatting
 console = Console()
 
+# sql-cli/src/main/python/opensearchsql_cli/sql
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# sql-cli/
+PROJECT_ROOT = os.path.normpath(os.path.join(current_dir, "../../../../../"))
+# Java directory: sql-cli/src/main/java
+JAVA_DIR = os.path.join(PROJECT_ROOT, "src", "main", "java")
+
 
 class SqlVersion:
     """
@@ -120,11 +127,7 @@ class SqlVersion:
             return False
 
         # Check if the JAR file exists
-        # sql-cli/src/main/python/opensearchsql_cli/sql
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        # sql-cli/
-        project_root = os.path.normpath(os.path.join(current_dir, "../../../../../"))
-        jar_path = self.get_jar_path(project_root)
+        jar_path = self.get_jar_path()
 
         # Create gradle task name with underscores (e.g., "2.19.1.0" -> "v2_19_1_0")
         version_parts = self.version.split(".")
@@ -147,11 +150,11 @@ class SqlVersion:
                 f"[bold yellow]Building v{self.version}...[/bold yellow]",
                 spinner="dots",
             ):
-                log_file = os.path.join(project_root, "build.log")
+                log_file = os.path.join(PROJECT_ROOT, "build.log")
                 with open(log_file, "w") as file:
                     result = subprocess.run(
                         ["./gradlew", gradle_task],
-                        cwd=project_root,
+                        cwd=PROJECT_ROOT,
                         stdout=file,
                         stderr=subprocess.STDOUT,
                     )
@@ -169,18 +172,15 @@ class SqlVersion:
 
         return True
 
-    def get_jar_path(self, project_root):
+    def get_jar_path(self):
         """
         Get the path to the JAR file for the specified version
-
-        Args:
-            project_root: Root directory of the project
 
         Returns:
             str: Path to the JAR file
         """
         return os.path.join(
-            project_root, "build", "libs", f"opensearchsql-v{self.version}.jar"
+            PROJECT_ROOT, "build", "libs", f"opensearchsql-v{self.version}.jar"
         )
 
 

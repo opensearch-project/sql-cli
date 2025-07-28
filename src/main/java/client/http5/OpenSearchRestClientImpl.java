@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package client;
+package client.http5;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -312,6 +312,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
       DeletePitResponse deletePitResponse =
           client.deletePit(deletePitRequest, RequestOptions.DEFAULT);
+
     } catch (IOException e) {
       throw new RuntimeException("Error occurred while creating PIT for new engine SQL query", e);
     }
@@ -335,7 +336,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
   }
 
   private void writeForAwsBody(String content) {
-    File dslFile = new File("src/main/java/client/aws/aws_body.json");
+    File dslFile = new File("src/main/java/client/http5/aws/aws_body.json");
     try (FileWriter writer = new FileWriter(dslFile)) {
       writer.write(content);
       System.out.println("Wrote DSL query to file: " + dslFile.getAbsolutePath());
