@@ -85,33 +85,30 @@ To install the SQL CLI:
 
 1. We suggest you install and activate a python3 virtual environment to avoid changing your local environment:
 
-    ```
-    pip install virtualenv
-    virtualenv venv
-    cd venv
-    source ./bin/activate
-    ```
+```
+  pip install virtualenv
+  virtualenv venv
+  cd venv
+  source ./bin/activate
+```
 
 
 2. Install the CLI:
 
 > TODO: Right now, user can install `pip install -e .` at the root directory until the current version package being published.
 
-    ```
+  ```
     pip install opensearchsql
-    ```
+  ```
 
-    The SQL CLI only works with Python 3, since Python 2 is no longer maintained since 01/01/2020. See https://pythonclock.org/
+  The SQL CLI only works with Python 3, since Python 2 is no longer maintained since 01/01/2020. See https://pythonclock.org/
 
 
 3. To launch the CLI, run:
 
-> In the [build.gradle](build.gradle): Will need to publish `datasources` submodule into the maven. Right now, user will have to put the path of datasource submodule locally from the SQL plug-in repository at `sql/datasources/build/libs/datasources-3.1.0.0-SNAPSHOT.jar`
-
-    ```
-    opensearchsql 
-    ```
-    By default, the `opensearchsql` command connects to [http://localhost:9200](http://localhost:9200/).
+  ```opensearchsql 
+    opensearchsql
+  ```
 
 ## Startup Commands
 
