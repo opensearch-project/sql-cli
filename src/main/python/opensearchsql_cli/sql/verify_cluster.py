@@ -164,11 +164,11 @@ class VerifyCluster:
 
             if not credentials:
                 error_msg = "Unable to retrieve AWS credentials."
-                return False, error_msg, None, url, None
+                return False, error_msg, None, url, None, None
 
             if not region:
                 error_msg = "Unable to retrieve AWS region."
-                return False, error_msg, None, url, None
+                return False, error_msg, None, url, None, None
 
             # Create AWS authentication
             aws_auth = AWS4Auth(

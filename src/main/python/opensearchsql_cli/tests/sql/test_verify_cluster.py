@@ -186,8 +186,24 @@ class TestVerifyCluster:
 
         cassette_name = f"aws_connection_{test_id}.yaml"
 
-        # Use VCR for all test cases
-        with my_vcr.use_cassette(cassette_name):
+        # Create a mock for boto3.Session and AWS4Auth
+        mock_credentials = MagicMock()
+        mock_credentials.access_key = "mock_access_key"
+        mock_credentials.secret_key = "mock_secret_key"
+        mock_credentials.token = "mock_token"
+        
+        mock_session = MagicMock()
+        mock_session.get_credentials.return_value = mock_credentials
+        mock_session.region_name = mock_region
+        
+        # Mock the AWS4Auth class to avoid authentication issues
+        mock_aws_auth = MagicMock()
+        
+        # Use VCR for all test cases with mocked boto3.Session and AWS4Auth
+        with my_vcr.use_cassette(cassette_name), \
+             patch('boto3.Session', return_value=mock_session), \
+             patch('requests_aws4auth.AWS4Auth', return_value=mock_aws_auth):
+            
             success, message, version, url, region, client = (
                 VerifyCluster.verify_aws_opensearch_connection(host)
             )
