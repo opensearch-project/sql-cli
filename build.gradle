@@ -80,9 +80,8 @@ ext {
 
     // Common dependencies shared across all versions
     sharedDeps = [
-        // will need to publish datasources submodule into the maven 
-        // right now, will have to use it locally
-        files('/Users/cnoramut/Documents/GitHub/sql/datasources/build/libs/datasources-3.1.0.0-SNAPSHOT.jar'),
+        // Using datasources submodule locally since it's not in the maven
+        files('build/libs/datasources-3.1.0.0-SNAPSHOT.jar'),
         // OpenSearch
         'org.apache.calcite:calcite-core:1.40.0',
         'com.facebook.presto:presto-matching:0.293',

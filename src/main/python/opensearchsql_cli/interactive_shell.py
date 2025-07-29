@@ -236,6 +236,14 @@ class InteractiveShell:
                 # Otherwise, insert a newline
                 buffer.insert_text("\n")
 
+        # If in PPL mode and multi-line is enabled, add a newline after the pipe |
+        @kb.add("|")
+        def _(event):
+            buffer = event.current_buffer
+            buffer.insert_text("|")
+            if self.is_ppl_mode and self.multi_line:
+                buffer.insert_text("\n")
+
         # Get color settings from config
         colors_section = config_manager.config.get("Colors", {})
         style = Style.from_dict(colors_section) if colors_section else None

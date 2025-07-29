@@ -116,7 +116,7 @@ class SqlVersion:
         invalid = self.version not in self.available_versions
 
         if invalid:
-            # Display available versions 
+            # Display available versions
             console.print(
                 f"[bold red]\nERROR:[/bold red] [red]Version {version} is currently not supported.[/red]"
             )
