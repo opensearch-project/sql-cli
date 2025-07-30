@@ -31,9 +31,23 @@ ext.getEffectiveVersion = { ->
     // Look for task names with version format (e.g., 3_1_0_0 or 3_x)
     def taskName = gradle.startParameter.taskNames.find { it.count("_") >= 1 && it.matches("[0-9].*") }
     if (taskName != null) {
+        // Check if it's a local version task (ends with _local)
+        if (taskName.endsWith("_local")) {
+            return taskName.substring(0, taskName.lastIndexOf("_local")).replace('_', '.')
+        }
         return taskName.replace('_', '.')
     }
     return project.hasProperty('version') ? project.getProperty('version') : null
+}
+
+// Helper function to check if a task is for local JAR
+ext.isLocalJarTask = { String taskName ->
+    return taskName.endsWith("_local")
+}
+
+// Helper function to get local JAR directory
+ext.getLocalJarDir = { ->
+    return project.hasProperty('localJarDir') ? project.getProperty('localJarDir') : null
 }
 
 ext.updateIsV3orAbove = { String version ->
@@ -81,6 +95,7 @@ ext {
     // Common dependencies shared across all versions
     sharedDeps = [
         // Using datasources submodule locally since it's not in the maven
+        // will remove after the PR merge in sql repo
         files('build/libs/datasources-3.1.0.0-SNAPSHOT.jar'),
         // OpenSearch
         'org.apache.calcite:calcite-core:1.40.0',
@@ -124,9 +139,15 @@ ext {
         'org.apache.httpcomponents:httpclient:4.5.14',
         'io.github.acm19:aws-request-signing-apache-interceptor:3.0.0'
     ]
+        
+    metaInfExclusions = [
+        'META-INF/*.SF',
+        'META-INF/*.DSA',
+        'META-INF/*.RSA',
+        'META-INF/*.EC',
+        'META-INF/MANIFEST.MF'
+    ]
     
-    
-    // JVM arguments for application and compilation
     jvmArgs = [
         '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
         '--add-opens=java.base/java.io=ALL-UNNAMED',
@@ -255,7 +276,7 @@ spotless {
 
 def createShadowJarTask(String taskName, String versionLabel, Configuration config) {
     tasks.register(taskName, com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-        archiveBaseName.set("opensearchsql-${versionLabel}")
+        archiveBaseName.set("opensearchsqlcli-${versionLabel}")
         configurations = [config]
         
         // Include the main source set output
@@ -271,12 +292,57 @@ def createShadowJarTask(String taskName, String versionLabel, Configuration conf
         }
         
         // Exclude signature files to avoid conflicts
-        exclude 'META-INF/*.SF'
-        exclude 'META-INF/*.DSA'
-        exclude 'META-INF/*.RSA'
-        exclude 'META-INF/*.EC'
-        exclude 'META-INF/*.SF'
-        exclude 'META-INF/MANIFEST.MF'
+        project.ext.metaInfExclusions.each { pattern ->
+            exclude pattern
+        }
+        
+        mergeServiceFiles()
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        zip64 = true
+    }
+}
+
+// Create a shadow jar task for local JAR files
+def createLocalShadowJarTask(String taskName, String versionLabel, String localJarDir) {
+    def localConfigName = "${versionLabel.replace('.', '_')}_local"
+    def localDependencyConfigName = "${localConfigName}_Dependency"
+
+    tasks.register(taskName, com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+        archiveBaseName.set("opensearchsqlcli-${versionLabel}")
+
+        // Include all dependencies
+        configurations = [
+            configurations.sharedDependency,
+            configurations[localConfigName],
+            configurations[localDependencyConfigName]
+        ]
+        
+        doFirst {
+            println "Including dependencies from sharedDependency:"
+            configurations.sharedDependency.each { file ->
+                println "  - ${file.name}"
+            }
+        }
+        
+        // Include the main source set output
+        from(sourceSets.main.output)
+        
+        // Include the appropriate HTTP client source set based on version
+        def httpClientInfo = project.ext.getHttpClientInfo()
+        from(httpClientInfo.sourceSet.output)
+        
+        // Include HTTP client dependencies
+        configurations += [httpClientInfo.dependencies]
+        
+        // Configure shadow jar settings
+        manifest {
+            attributes 'Main-Class': 'Gateway'
+        }
+        
+        // Exclude signature files to avoid conflicts
+        project.ext.metaInfExclusions.each { pattern ->
+            exclude pattern
+        }
         
         mergeServiceFiles()
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -340,20 +406,101 @@ ext.createVersionConfigurations = { String version ->
     return configName
 }
 
+// Create configurations for local JAR files
+ext.createLocalConfigurations = { String version, String localJarDir ->
+    def configName = "${version.replace('.', '_')}_local"
+    def dependencyConfigName = "${configName}_Dependency"
+
+    if (!configurations.findByName(configName)) {
+        configurations.create(configName)
+        configurations.create(dependencyConfigName)
+        
+        // Update the global isV3orAbove variable
+        project.ext.updateIsV3orAbove(version)
+        
+        // Configure runtime configuration based on version
+        configureRuntimeConfiguration(version, configName, dependencyConfigName)
+        
+        // Add each submodule JAR file to the configuration
+        project.ext.submodules.each { submodule ->
+            def submoduleJarPath = "${localJarDir}/${submodule}/build/libs/${submodule}-${version}-SNAPSHOT.jar"
+            def submoduleJarFile = new File(submoduleJarPath)
+            if (submoduleJarFile.exists()) {
+                println "Adding submodule JAR file to configuration: ${submoduleJarPath}"
+                dependencies.add(configName, files(submoduleJarFile))
+            } else {
+                println "Warning: Submodule JAR file not found: ${submoduleJarPath}"
+            }
+        }
+        
+        // Add OpenSearch client dependencies with appropriate version
+        def clientVersion = project.ext.getOpenSearchClientVersion(version)
+        
+        def opensearchClientDeps = [
+            'opensearch-rest-high-level-client',
+            'opensearch-rest-client',
+            'opensearch-java'
+        ]
+        
+        opensearchClientDeps.each { dep ->
+            dependencies.add(configName, "org.opensearch.client:${dep}:${clientVersion}")
+        }
+        
+        // Add OpenSearch core dependency
+        dependencies.add(configName, "org.opensearch:opensearch:${clientVersion}")
+        
+        println "Version ${version}: Using OpenSearch client version ${clientVersion}"
+        
+        // Create shadow jar task for this version
+        createShadowJarTask(configName, version, configurations[dependencyConfigName])
+        
+        println "Version ${version}: Created configuration and task name as ${configName}"
+    }
+    
+    return configName
+}
+
 // Use Gradle's task rules for dynamic task creation
 tasks.addRule("Pattern: <version>: Creates a task for the specified version") { String taskName ->
     if (taskName.count("_") >= 1 && taskName.matches("[0-9].*")) {
         def version = taskName.replace('_', '.')
-        def configName = project.ext.createVersionConfigurations(version)
         
-        // Configure implementation directly
-        def httpClientInfo = project.ext.getHttpClientInfo()
-        configurations.implementation.extendsFrom = [
-            configurations.sharedDependency, 
-            httpClientInfo.dependencies, 
-            configurations[configName]
-        ] as Set
-        
-        println "Version ${version}: Set implementation configuration"
+        // Check if it's a local JAR task
+        if (project.ext.isLocalJarTask(taskName)) {
+            // Extract the version without the _local suffix
+            version = taskName.substring(0, taskName.lastIndexOf("_local")).replace('_', '.')
+            
+            // Get the local JAR directory
+            def localJarDir = project.ext.getLocalJarDir()
+            
+            if (localJarDir == null) {
+                throw new GradleException("Local JAR directory not specified. Use -PlocalJarDir=/path/to/local/jar")
+            }
+            
+            // Create configurations for local JAR files
+            def localConfigName = project.ext.createLocalConfigurations(version, localJarDir)
+            
+            // Configure implementation directly
+            def httpClientInfo = project.ext.getHttpClientInfo()
+            configurations.implementation.extendsFrom = [
+                configurations.sharedDependency, 
+                httpClientInfo.dependencies, 
+                configurations[localConfigName]
+            ] as Set
+            
+            println "Version ${version}: Set implementation configuration for local JAR using directory ${localJarDir}"
+        } else {
+            def configName = project.ext.createVersionConfigurations(version)
+            
+            // Configure implementation directly
+            def httpClientInfo = project.ext.getHttpClientInfo()
+            configurations.implementation.extendsFrom = [
+                configurations.sharedDependency, 
+                httpClientInfo.dependencies, 
+                configurations[configName]
+            ] as Set
+            
+            println "Version ${version}: Set implementation configuration"
+        }
     }
 }

@@ -36,11 +36,18 @@ Query:
   # Default query language: PPL, SQL
   # Default output format: Table, JSON, CSV 
   # Set to true for vertical table display mode
-  # OpenSearch SQL plugin version, must do "" as a string
   language: ""
   format: ""
   vertical: false
+
+SqlVersion:
+  # OpenSearch SQL plugin version, must do "" as a string
+  # version: use the Maven repository 
+  # local: use local jar files with absolute path
+  # remote: use git clone then use its local jar files
   version: ""
+  local: ""
+  remote: "2.19-dev https://github.com/opensearch-project/sql.git"
 
 SqlSettings:
   # Advanced settings for OpenSearch SQL plugin

@@ -118,6 +118,16 @@ class OpenSearchSQLCLI:
                     "2.19",
                 ],
             ),
+            local_dir: str = typer.Option(
+                None,
+                "--local",
+                help="Use a local directory containing the SQL plugin JAR",
+            ),
+            remote: str = typer.Option(
+                None,
+                "--remote",
+                help='Clone from a git repository: --remote "<branch_name> <git_url>"',
+            ),
             rebuild: bool = typer.Option(
                 False,
                 "--rebuild",
@@ -139,21 +149,55 @@ class OpenSearchSQLCLI:
                 config_manager.display()
                 return
 
-            # Set version if provided via command line or from config file
+            # Version selection logic with priority
             if version:
                 # Version provided via command line
-                success = sql_version.set_version(version, rebuild)
+                success = sql_version.set_version(version=version, rebuild=rebuild)
                 if not success:
                     return
+            elif local_dir:
+                # Local directory provided via command line
+                success = sql_version.set_local_version(local_dir, rebuild=rebuild)
+                if not success:
+                    return
+            elif remote:
+                # Remote git info provided via command line
+                remote_parts = remote.split()
+                if len(remote_parts) >= 2:
+                    branch_name, git_url = remote_parts[0], remote_parts[1]
+                    success = sql_version.set_remote_version(
+                        branch_name, git_url, rebuild=rebuild
+                    )
+                    if not success:
+                        return
+                else:
+                    console.print(
+                        "[bold red]ERROR:[/bold red] [red]Remote option requires both branch name and git URL[/red]"
+                    )
+                    return
             else:
-                # Try to get version from config file
-                config_version = config_manager.get("Query", "version", "")
+                # Try to get from config file
+                config_version = config_manager.get("SqlVersion", "version", "")
+                config_local = config_manager.get("SqlVersion", "local", "")
+                config_remote = config_manager.get("SqlVersion", "remote", "").split()
+
                 if config_version:
                     success = sql_version.set_version(config_version, rebuild)
                     if not success:
                         return
+                elif config_local:
+                    success = sql_version.set_local_version(config_local, rebuild)
+                    if not success:
+                        return
+                elif len(config_remote) >= 2:
+                    branch_name, git_url = config_remote[0], config_remote[1]
+                    success = sql_version.set_remote_version(
+                        branch_name, git_url, rebuild
+                    )
+                    if not success:
+                        return
                 else:
-                    # Use the default latest version if version nor config provided
+                    # Use the default latest version if no options provided
                     success = sql_version.set_version(sql_version.version, rebuild)
                     if not success:
                         return

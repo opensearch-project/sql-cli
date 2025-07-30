@@ -1,4 +1,14 @@
 ## Development Guide
+
+This guide provides comprehensive information for developers who want to contribute to the OpenSearch SQL CLI project. 
+
+- [Development Environment Set Up](#development-environment-set-up)
+- [Code Architecture Details](#code-architecture-details)
+- [Run CLI](#run-cli)
+- [Testing](#testing)
+- [Style](#style)
+- [Release Guide](#release-guide)
+
 ### Development Environment Set Up
 - `pip install virtualenv`
 - `virtualenv venv` to create virtual environment for **Python 3**
@@ -62,14 +72,37 @@ The CLI supports multiple OpenSearch versions by dynamically building version-sp
 
 ##### 1. Version Detection and Build Triggering
 
-When a user specifies a version (e.g., `opensearchsql -v 3.1`):
-- `sql_version.py` parses and normalizes it to a full version (e.g., `3.1.0.0`)
-- The system checks if a corresponding JAR file exists (e.g., `opensearchsql-3.1.0.0.jar`)
-- If not found, it automatically triggers the Gradle build process:
-  ```bash
-  # For OpenSearch SQL 3.1.0.0
-  ./gradlew 3_1_0_0
-  ```
+The CLI supports three methods for specifying the SQL version:
+
+1. **Maven Repository Version** (e.g., `opensearchsql -v 3.1`):
+   - `sql_version.py` parses and normalizes it to a full version (e.g., `3.1.0.0`)
+   - The system checks if a corresponding JAR file exists (e.g., `opensearchsql-3.1.0.0.jar`)
+   - If not found, it automatically triggers the Gradle build process:
+     ```bash
+     # For OpenSearch SQL 3.1.0.0
+     ./gradlew 3_1_0_0
+     ```
+
+2. **Local Directory** (e.g., `opensearchsql --local /path/to/sql/plugin/directory`):
+   - Uses a local directory containing the SQL plugin JAR files
+   - Extracts the version from the JAR filename
+   - Builds a local version-specific JAR:
+     ```bash
+     # For local OpenSearch SQL 3.1.0.0
+     ./gradlew 3_1_0_0_local -PlocalJarDir=/path/to/sql/plugin/directory
+     ```
+
+3. **Remote Git Repository** (e.g., `opensearchsql --remote "main https://github.com/opensearch-project/sql.git"`):
+   - Clones the specified git repository and branch using:
+     ```bash
+     git clone --branch <git_branch> --single-branch <git_url>
+     ```
+   - Extracts the version from the cloned repository's JAR files
+   - Builds a local version-specific JAR using the cloned repository
+      ```bash
+      # For local OpenSearch SQL 3.1.0.0
+      ./gradlew 3_1_0_0_local -PlocalJarDir=/project_root/remote/git_directory
+      ```
 
 ##### 2. Dynamic Gradle Task Creation
 
@@ -113,6 +146,11 @@ The `createShadowJarTask` function creates a task to build a fat JAR with all de
 - The resulting JAR is named with the specific version (e.g., `opensearchsql-3.1.0.0.jar`)
 - This JAR includes all necessary dependencies for the specified version
 - The JAR is then loaded by the Python process when the CLI runs
+
+Similarly, the `createLocalShadowJarTask` function creates a task for building a fat JAR using local JAR files:
+- It accepts a local directory path containing the SQL plugin JAR files
+- It includes the JAR files from the specified local directory
+- The resulting JAR is named with the specific version and includes "_local" in the Gradle task name (e.g., `3_1_0_0_local`)
 
 This architecture allows the CLI to support multiple OpenSearch versions without requiring separate installations or complex configuration.
 

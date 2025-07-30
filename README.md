@@ -1,3 +1,19 @@
+<img src="https://opensearch.org/assets/brand/SVG/Logo/opensearch_logo_default.svg" height="64px"/>
+
+- [OpenSearch SQL CLI](#OpenSearch-SQL-CLI)
+- [Query Compatibility Testing](#query-compatibility-testing)
+- [SQL CLI](#sql-cli)
+- [Features](#features)
+- [Version](#version)
+- [Install](#install)
+- [Startup Commands](#startup-commands)
+- [Interactive Mode Commands](#interactive-mode-commands)
+- [Configuration](#configuration)
+- [Using the CLI](#using-the-cli)
+- [Code of Conduct](#code-of-conduct)
+- [Security Issue Notifications](#security-issue-notifications)
+- [Licensing](#licensing)
+- [Copyright](#copyright)
 
 [![SQL CLI Test and Build](https://github.com/opensearch-project/sql-cli/workflows/SQL%20CLI%20Test%20and%20Build/badge.svg)](https://github.com/opensearch-project/sql-cli/actions)
 [![Latest Version](https://img.shields.io/pypi/v/opensearchsql.svg)](https://pypi.python.org/pypi/opensearchsql/)
@@ -58,6 +74,9 @@ This CLI acts as a safe testing environment, allowing smooth transitions between
   - Explain plans
   - Save and load queries
 - **SQL plugin version selection**
+  - Maven respository
+  - Local directory
+  - Git clone 
 - **Command history**
   - `src/main/python/opensearchsql_cli/.cli_history`
 - **Configuration file**
@@ -106,7 +125,7 @@ To install the SQL CLI:
 
 3. To launch the CLI, run:
 
-  ```opensearchsql 
+  ``` 
     opensearchsql
   ```
 
@@ -116,7 +135,7 @@ To install the SQL CLI:
 - **Language**: PPL  
 - **Endpoint**: `http://localhost:9200`  
 - **Output Format**: Table  
-- **SQL Plugin Version**: `3.1.0.0`
+- **SQL Plugin Version**: Latest version
 
 ### If not specify protocol or port number
   - The default protocol is **HTTP** with port number **9200**. 
@@ -124,12 +143,14 @@ To install the SQL CLI:
 
 | Options                               | Description                                                                   |
 |---------------------------------------|-------------------------------------------------------------------------------|
-| `-e`, `--endpoint` `<host:port>`      | Set the OpenSearch endpoint (e.g., `protocol://domain:port`) |
+| `-e`, `--endpoint` `<host:port>`      | Set the OpenSearch endpoint (e.g., `protocol://domain:port`)                  |
 | `-u`, `--user` `<username:password>`  | Provide credentials for secure clusters                                       |
-| `-k`, `--insecure`                    | Ignore SSL certificate verification (use with `https` protocol)                     |
+| `-k`, `--insecure`                    | Ignore SSL certificate verification (use with `https` protocol)               |
 | `-l`, `--language` `<language>`       | Choose query language: `ppl` or `sql`                                         |
 | `-f`, `--format` `<format>`           | Set output format: `table`, `json`, or `csv`                                  |
 | `-v`, `--version` `<version>`         | Set OpenSearch SQL plugin version (e.g., `3.1`, `2.19`)                       |
+| `--local` `<directory>`               | Use a local directory containing the SQL plugin JAR                           |
+| `--remote` `<branch_name git_url>`    | Clone from a git repository with specified branch name and URL                |
 | `--rebuild`                           | Rebuild or update the corresponding JAR file                                  |
 | `-c`, `--config`                      | Show current configuration values                                             |
 | `--help`                              | Show help message and usage examples                                          |
@@ -151,20 +172,21 @@ opensearchsql -l sql -f json
 
 # Load specific plugin version
 opensearchsql -v 2.19
+
+# Use a local SQL plugin directory
+opensearchsql --local /path/to/sql/plugin/directory
+
+# Use a remote git repository
+opensearchsql --remote "main https://github.com/opensearch-project/sql.git"
 ```
 
 ## Interactive Mode Commands
 
-### Current Settings Displayed on Start
-- **SQL Version**: `v3.1.0.0`
-- **Language**: `PPL` or `SQL`
-- **Format**: `TABLE`, `JSON`, or `CSV`
-
 | Options                          | Description                                           |
 |----------------------------------|-------------------------------------------------------|
 | `<query>`                        | Execute a query                                       |
-| `-l <type>`                      | Change language: `PPL`, `SQL`                         |
-| `-f <type>`                      | Change output format: `JSON`, `TABLE`, or `CSV`       |
+| `-l <type>`                      | Change language: `ppl`, `sql`                         |
+| `-f <type>`                      | Change output format: `table`, `json`, or `csv`       |
 | `-v`                             | Toggle vertical table display mode                    |
 | `-s --save <name>`               | Save the latest query result with a given name        |
 | `-s --load <name>`               | Load and display a saved query result                 |
@@ -174,12 +196,9 @@ opensearchsql -v 2.19
 | `exit`, `quit`, `q`              | Exit the interactive mode                             |
 
 ### Version Switching
-To use a different OpenSearch SQL plug-in version, restart the CLI with
-```bash
-opensearchsql -v <version number>
-```
+To use a different OpenSearch SQL plug-in version, you must restart the CLI 
 
-## Configure
+## Configuration
 
 When you first launch the SQL CLI, a configuration file is automatically loaded.
 
@@ -187,19 +206,19 @@ You can also configure the following connection properties:
 
 ### Main
 
-| Key          | Description                                            | Options                    | 
-|--------------|--------------------------------------------------------|----------------------------|
-| `multi_line` |  allows breaking up the statements into multiple lines | `true`, `false`            |
+| Key          | Description                                            | Options         | Default   | 
+|--------------|--------------------------------------------------------|-----------------|-----------|
+| `multi_line` |  allows breaking up the statements into multiple lines | `true`, `false` | `false`   |
 
 ### Connection Settings
 
-| Key        | Description                                                                                   | Example             | Default         |
-|------------|-----------------------------------------------------------------------------------------------|---------------------|-----------------|
-| `endpoint` | OpenSearch URL (`http://localhost:9200`, `https://localhost:9200`, or AWS SigV4 endpoint)    | `localhost:9200`    | `localhost:9200` |
-| `username` | Username for HTTPS authentication *(use `""` if not set)*                                     | `"admin"`           | `""`            |
-| `password` | Password for HTTPS authentication *(use `""` if not set)*                                     | `"admin"`           | `""`            |
-| `insecure` | Skip certificate validation (`-k` flag)                                                       | `true` / `false`    | `false`         |
-| `aws_auth` | Use AWS SigV4 authentication                                                                  | `true` / `false`    | `false`         |
+| Key        | Description                                                   | Example             | Default         |
+|------------|---------------------------------------------------------------|---------------------|-----------------|
+| `endpoint` | OpenSearch URL (`http://localhost:9200`, `https://localhost:9200`, or AWS SigV4 endpoint) | `localhost:9200`    | `localhost:9200`|
+| `username` | Username for HTTPS authentication *(use `""` if not set)*     | `"admin"`           | `""`            |
+| `password` | Password for HTTPS authentication *(use `""` if not set)*     | `"admin"`           | `""`            |
+| `insecure` | Skip certificate validation (`-k` flag)                       | `true` / `false`    | `false`         |
+| `aws_auth` | Use AWS SigV4 authentication                                  | `true` / `false`    | `false`         |
 
 > ⚠️ **Security Warning**: Passwords stored in this file are not encrypted. Consider using `-u username:password` instead for sensitive environments.
 
@@ -210,19 +229,26 @@ You can also configure the following connection properties:
 | `language` | Query language                         | `ppl`, `sql`               | `ppl`    |
 | `format`   | Output format                          | `table`, `json`, `csv`     | `table`  |
 | `vertical` | Use vertical table display mode        | `true` / `false`           | `false`  |
-| `version`  | SQL plugin version (as a string)       | `"2.19"`                   | `""`     |
+
+### SQL Version Settings
+
+| Key        | Description                                  | Example                                                | Default  |
+|------------|----------------------------------------------|--------------------------------------------------------|----------|
+| `version`  | Use Maven repository version (as a string)   | `"3.1"`                                                | `""`     |
+| `local`    | Use local JAR files with absolute path       | `"/path/to/sql/plugin/directory"`                      | `""`     |
+| `remote`   | Use git clone then use its local JAR files   | `"main https://github.com/opensearch-project/sql.git"` | `""`     |
 
 ### SQL Plugin Settings
 
-| Key                                             | Description                                                                 | Default  |
-|--------------------------------------------------|-----------------------------------------------------------------------------|----------|
-| `QUERY_SIZE_LIMIT`                              | Maximum number of rows returned per query                                  | `200`  |
-| `FIELD_TYPE_TOLERANCE`                          | Tolerate field type mismatches                                             | `true`   |
-| `CALCITE_ENGINE_ENABLED`                        | Enable the Calcite SQL engine                                              | `true`   |
-| `CALCITE_FALLBACK_ALLOWED`                      | Fallback to legacy engine if Calcite fails                                 | `true`   |
-| `CALCITE_PUSHDOWN_ENABLED`                      | Enable pushdown optimization in Calcite                                    | `true`   |
-| `CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR`   | Row count estimation factor for pushdown                                   | `1.0`    |
-| `SQL_CURSOR_KEEP_ALIVE`                         | Cursor keep-alive time in minutes                                          | `1`      |
+| Key                                             | Description                                   | Default  |
+|-------------------------------------------------|-----------------------------------------------|----------|
+| `QUERY_SIZE_LIMIT`                              | Maximum number of rows returned per query     | `200`    |
+| `FIELD_TYPE_TOLERANCE`                          | Tolerate field type mismatches                | `true`   |
+| `CALCITE_ENGINE_ENABLED`                        | Enable the Calcite SQL engine                 | `true`   |
+| `CALCITE_FALLBACK_ALLOWED`                      | Fallback to legacy engine if Calcite fails    | `true`   |
+| `CALCITE_PUSHDOWN_ENABLED`                      | Enable pushdown optimization in Calcite       | `true`   |
+| `CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR`   | Row count estimation factor for pushdown      | `1.0`    |
+| `SQL_CURSOR_KEEP_ALIVE`                         | Cursor keep-alive time in minutes             | `1`      |
 
 > **Note**: **PPL Calcite** result is limited by `QUERY_SIZE_LIMIT` number
 
