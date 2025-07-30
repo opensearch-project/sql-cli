@@ -2,6 +2,15 @@
 
 This directory contains the test suite for the OpenSearch SQL CLI project. The tests are organized to validate the functionality of various components of the CLI tool, ensuring that it works correctly and reliably.
 
+- [Test Structure](#test-structure)
+- [Test Components](#test-components)
+- [Test Dependencies](#test-dependencies)
+- [Running Tests](#running-tests)
+- [Warning Filters](#warning-filters)
+- [Writing New Tests](#writing-new-tests)
+- [Mocking Strategy](#mocking-strategy)
+- [Test Coverage](#test-coverage)
+
 ## Test Structure
 
 The test suite is organized into the following structure:
@@ -63,20 +72,21 @@ The test suite uses the following dependencies:
 
 ## Running Tests
 
-To run the tests, you can use pytest from the project root directory:
-
 ```bash
+# Change to tests directory
+cd src/main/python/opensearchsql_cli/tests/
+
 # Run all tests
-pytest src/main/python/opensearchsql_cli/tests/
+pytest 
 
 # Run specific test file
-pytest src/main/python/opensearchsql_cli/tests/test_main_commands.py
+pytest test_main_commands.py
 
 # Run specific test class
-pytest src/main/python/opensearchsql_cli/tests/test_main_commands.py::TestCommands
+pytest test_main_commands.py::TestCommands
 
 # Run specific test method
-pytest src/main/python/opensearchsql_cli/tests/test_main_commands.py::TestCommands::test_endpoint_command
+pytest test_main_commands.py::TestCommands::test_endpoint_command
 ```
 
 ## Warning Filters

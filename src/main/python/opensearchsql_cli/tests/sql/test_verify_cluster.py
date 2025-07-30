@@ -13,7 +13,7 @@ from opensearchsql_cli.sql.verify_cluster import VerifyCluster
 
 # Create a custom VCR instance with specific settings
 my_vcr = vcr.VCR(
-    cassette_library_dir="src/main/python/opensearchsql_cli/tests/sql/vcr_cassettes",
+    cassette_library_dir="sql/vcr_cassettes",
     record_mode="once",
     match_on=["uri", "method"],
     filter_headers=["authorization"],  # Don't record authorization headers
@@ -191,19 +191,19 @@ class TestVerifyCluster:
         mock_credentials.access_key = "mock_access_key"
         mock_credentials.secret_key = "mock_secret_key"
         mock_credentials.token = "mock_token"
-        
+
         mock_session = MagicMock()
         mock_session.get_credentials.return_value = mock_credentials
         mock_session.region_name = mock_region
-        
+
         # Mock the AWS4Auth class to avoid authentication issues
         mock_aws_auth = MagicMock()
-        
+
         # Use VCR for all test cases with mocked boto3.Session and AWS4Auth
-        with my_vcr.use_cassette(cassette_name), \
-             patch('boto3.Session', return_value=mock_session), \
-             patch('requests_aws4auth.AWS4Auth', return_value=mock_aws_auth):
-            
+        with my_vcr.use_cassette(cassette_name), patch(
+            "boto3.Session", return_value=mock_session
+        ), patch("requests_aws4auth.AWS4Auth", return_value=mock_aws_auth):
+
             success, message, version, url, region, client = (
                 VerifyCluster.verify_aws_opensearch_connection(host)
             )

@@ -79,6 +79,8 @@ class TestCommands:
         language=None,
         format=None,
         version=None,
+        local=None,
+        remote=None,
         rebuild=False,
         config=False,
         connection_success=True,
@@ -140,6 +142,8 @@ class TestCommands:
         # Set up version manager
         mock_version_manager.version = version or "1.0.0"
         mock_version_manager.set_version.return_value = version_success
+        mock_version_manager.set_local_version.return_value = version_success
+        mock_version_manager.set_remote_version.return_value = version_success
 
         mock_config_manager.get.side_effect = lambda section, key, default: {
             ("Query", "language", "ppl"): language or "ppl",
@@ -181,6 +185,10 @@ class TestCommands:
             command_args.extend(["-f", format])
         if version:
             command_args.extend(["-v", version])
+        if local:
+            command_args.extend(["--local", local])
+        if remote:
+            command_args.extend(["--remote", remote])
         if rebuild:
             command_args.append("--rebuild")
         if config:
@@ -406,6 +414,12 @@ class TestCommands:
             (9, "Version with rebuild flag", "version", "3.1", "v3.1", True, True),
             (10, "Invalid version", "version", "invalid", None, False, False),
             (11, "Version missing argument", "version", None, None, False, True),
+            # Local directory tests
+            (12, "Local directory", "local", "/path/to/sql", "v3.1", False, True),
+            (13, "Local directory with rebuild", "local", "/path", "v3.1", True, True),
+            # Remote git tests
+            (14, "Remote", "remote", "main url.git", "v3.1", False, True),
+            (15, "Remote with rebuild", "remote", "main url.git", "v3.1", True, True),
         ],
     )
     @patch("opensearchsql_cli.main.sql_connection")
@@ -447,6 +461,8 @@ class TestCommands:
             "language": "-l",
             "format": "-f",
             "version": "-v",
+            "local": "--local",
+            "remote": "--remote",
         }
         flag = flag_map[command_type]
 
@@ -462,8 +478,8 @@ class TestCommands:
                 command_type: value,
             }
 
-            # Add rebuild flag for version command if needed
-            if command_type == "version" and rebuild:
+            # Add rebuild flag if needed
+            if rebuild:
                 kwargs["rebuild"] = True
                 kwargs["version_success"] = version_success
 
@@ -501,15 +517,59 @@ class TestCommands:
 
             elif command_type == "version":
                 # Verify that set_version was called with the correct parameters
-                mock_version_manager.set_version.assert_called_once_with(value, rebuild)
-
-                # Verify specific behavior based on version success
+                # Check if any of the version setting methods were called
                 if version_success:
+                    # Check if set_version was called with keyword arguments
+                    mock_version_manager.set_version.assert_called_once_with(
+                        version=value, rebuild=rebuild
+                    )
+
                     mock_console.print.assert_any_call(
                         f"[green]SQL:[/green] [dim white]{expected_display}[/dim white]"
                     )
                     test_result = f"Version {value} set successfully"
                 else:
+                    mock_version_manager.set_version.assert_called_once_with(
+                        version=value, rebuild=rebuild
+                    )
                     test_result = f"Version {value} failed as expected"
+
+            elif command_type == "local":
+                # Verify that set_local_version was called with the correct parameters
+                if version_success:
+                    # Check if set_local_version was called with correct parameters
+                    mock_version_manager.set_local_version.assert_called_once_with(
+                        value, rebuild=rebuild
+                    )
+
+                    test_result = f"Local directory {value} set successfully"
+                else:
+                    mock_version_manager.set_local_version.assert_called_once_with(
+                        value, rebuild=rebuild
+                    )
+                    test_result = f"Local directory {value} failed as expected"
+
+            elif command_type == "remote":
+                # Verify that set_remote_version was called with the correct parameters
+                if version_success:
+                    # Parse the remote value to get branch name and git URL
+                    remote_parts = value.split()
+                    branch_name, git_url = remote_parts[0], remote_parts[1]
+
+                    # Check if set_remote_version was called with correct parameters
+                    mock_version_manager.set_remote_version.assert_called_once_with(
+                        branch_name, git_url, rebuild=rebuild
+                    )
+
+                    test_result = f"Remote git {value} set successfully"
+                else:
+                    # Parse the remote value to get branch name and git URL
+                    remote_parts = value.split()
+                    branch_name, git_url = remote_parts[0], remote_parts[1]
+
+                    mock_version_manager.set_remote_version.assert_called_once_with(
+                        branch_name, git_url, rebuild=rebuild
+                    )
+                    test_result = f"Remote git {value} failed as expected"
 
         self.print_test_info(f"{description} (Test #{test_id})", test_result)
