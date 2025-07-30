@@ -184,7 +184,7 @@ class TestCommands:
         if format:
             command_args.extend(["-f", format])
         if version:
-            command_args.extend(["-v", version])
+            command_args.extend(["--version", version])
         if local:
             command_args.extend(["--local", local])
         if remote:
@@ -460,7 +460,7 @@ class TestCommands:
         flag_map = {
             "language": "-l",
             "format": "-f",
-            "version": "-v",
+            "version": "--version",
             "local": "--local",
             "remote": "--remote",
         }

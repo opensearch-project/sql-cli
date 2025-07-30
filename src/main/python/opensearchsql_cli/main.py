@@ -111,7 +111,6 @@ class OpenSearchSQLCLI:
             version: str = typer.Option(
                 None,
                 "--version",
-                "-v",
                 help="Set OpenSearch SQL plug-in version: 3.1, 2.19",
                 autocompletion=lambda ctx, incomplete: [
                     "3.1",

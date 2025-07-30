@@ -43,6 +43,8 @@ By using this CLI tool, they can:
 - Verify that their current queries execute as expected under the new SQL engine.
 - Avoid potential breaking changes and reduce the need for rollback in production.
 
+Moreover, developers can use this to test their own SQL plug-in implementation.
+
 This CLI acts as a safe testing environment, allowing smooth transitions between versions with confidence.
 
 ### SQL CLI
@@ -56,7 +58,8 @@ This CLI acts as a safe testing environment, allowing smooth transitions between
 
 ## Features
 
-- **Autocomplete** for SQL and PPL
+- **Multi-line input**
+- **Autocomplete** for SQL, PPL, index names
 - **Syntax highlighting**
 - **Formatted output**
   - Table
@@ -84,7 +87,8 @@ This CLI acts as a safe testing environment, allowing smooth transitions between
 - **SQL plug-in connection log**
   - `src/main/java/sql_library.log`
 - **Gradle log**
-  - `build.log`
+  - `sqlcli_build.log`: SQL CLI jar
+  - `sql_build.log`: SQL Plug-in jar
 
 ## Version
 Unlike plugins which use 4-digit version number. SQl-CLI uses `x.x.x` as version number same as other python packages in OpenSearch family. As a client for OpenSearch SQL, it has independent release. 
@@ -148,7 +152,7 @@ To install the SQL CLI:
 | `-k`, `--insecure`                    | Ignore SSL certificate verification (use with `https` protocol)               |
 | `-l`, `--language` `<language>`       | Choose query language: `ppl` or `sql`                                         |
 | `-f`, `--format` `<format>`           | Set output format: `table`, `json`, or `csv`                                  |
-| `-v`, `--version` `<version>`         | Set OpenSearch SQL plugin version (e.g., `3.1`, `2.19`)                       |
+| `--version` `<version>`               | Set OpenSearch SQL plugin version (e.g., `3.1`, `2.19`)                       |
 | `--local` `<directory>`               | Use a local directory containing the SQL plugin JAR                           |
 | `--remote` `<branch_name git_url>`    | Clone from a git repository with specified branch name and URL                |
 | `--rebuild`                           | Rebuild or update the corresponding JAR file                                  |
@@ -171,7 +175,7 @@ opensearchsql --aws-auth amazon.com
 opensearchsql -l sql -f json
 
 # Load specific plugin version
-opensearchsql -v 2.19
+opensearchsql --version 2.19
 
 # Use a local SQL plugin directory
 opensearchsql --local /path/to/sql/plugin/directory
