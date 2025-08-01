@@ -52,7 +52,7 @@ class TestInteractiveShell:
         assert "Change language: PPL, SQL" in help_text
         assert "Change format: JSON, Table, CSV" in help_text
         assert "Toggle vertical display mode" in help_text
-        assert "Save the latest query result" in help_text
+        assert "Save the latest query with a name" in help_text
         assert "Exit interactive mode" in help_text
 
     @pytest.mark.parametrize(

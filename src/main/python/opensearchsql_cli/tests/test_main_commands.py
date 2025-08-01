@@ -422,8 +422,8 @@ class TestCommands:
             (12, "Local directory", "local", "/path/to/sql", "v3.1", False, True),
             (13, "Local directory with rebuild", "local", "/path", "v3.1", True, True),
             # Remote git tests
-            (14, "Remote", "remote", "main url.git", "v3.1", False, True),
-            (15, "Remote with rebuild", "remote", "main url.git", "v3.1", True, True),
+            (14, "Remote", "remote", "url.git", "v3.1", False, True),
+            (15, "Remote with rebuild", "remote", "url.git", "v3.1", True, True),
         ],
     )
     @patch("opensearchsql_cli.main.sql_connection")
@@ -556,10 +556,12 @@ class TestCommands:
             elif command_type == "remote":
                 # Verify that set_remote_version was called with the correct parameters
                 if version_success:
-                    # Parse the remote value to get branch name and git URL
-                    remote_parts = value.split()
-                    branch_name, git_url = remote_parts[0], remote_parts[1]
-
+                    # Get git URL from value
+                    git_url = value
+                    
+                    # Get branch name from config (default to "main")
+                    branch_name = mock_config_manager.get("SqlVersion", "branch_name", "main")
+                    
                     # Get remote_output from mock_config_manager
                     remote_output = mock_config_manager.get(
                         "SqlVersion", "remote_output", ""
@@ -575,10 +577,12 @@ class TestCommands:
 
                     test_result = f"Remote git {value} set successfully"
                 else:
-                    # Parse the remote value to get branch name and git URL
-                    remote_parts = value.split()
-                    branch_name, git_url = remote_parts[0], remote_parts[1]
-
+                    # Get git URL from value
+                    git_url = value
+                    
+                    # Get branch name from config (default to "main")
+                    branch_name = mock_config_manager.get("SqlVersion", "branch_name", "main")
+                    
                     # Get remote_output from mock_config_manager
                     remote_output = mock_config_manager.get(
                         "SqlVersion", "remote_output", ""

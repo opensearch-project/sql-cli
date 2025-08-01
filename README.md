@@ -152,10 +152,11 @@ To install the SQL CLI:
 | `-k`, `--insecure`                    | Ignore SSL certificate verification (use with `https` protocol)               |
 | `-l`, `--language` `<language>`       | Choose query language: `ppl` or `sql`                                         |
 | `-f`, `--format` `<format>`           | Set output format: `table`, `json`, or `csv`                                  |
-| `-q`, `--query` `<query>`             | Execute a query and exit (non-interactive mode)                               |
+| `-q`, `--query` `<query>`             | Single query execution                                                        |
 | `--version` `<version>`               | Set OpenSearch SQL plugin version (e.g., `3.1`, `2.19`)                       |
 | `--local` `<directory>`               | Use a local directory containing the SQL plugin JAR                           |
-| `--remote` `<branch_name git_url>`    | Clone from a git repository with specified branch name and URL                |
+| `--remote` `<git_url>`                | Clone from a git repository URL                                               |
+| `-b`, `--branch` `<branch_name>`      | Branch name to clone (default is main)                                        |
 | `-o`, `--output` `<directory>`        | Custom output directory for cloned repository (used with `--remote`)          |
 | `--rebuild`                           | Rebuild or update the corresponding JAR file                                  |
 | `-c`, `--config`                      | Show current configuration values                                             |
@@ -185,11 +186,14 @@ opensearchsql --version 2.19
 # Use a local SQL plugin directory
 opensearchsql --local /path/to/sql/plugin/directory
 
-# Use a remote git repository
-opensearchsql --remote "main https://github.com/opensearch-project/sql.git"
+# Use a remote git repository with main branch
+opensearchsql --remote "https://github.com/opensearch-project/sql.git"
+
+# Use a remote git repository with a specific branch
+opensearchsql --remote "https://github.com/opensearch-project/sql.git" -b "feature-branch"
 
 # Clone a repository to a custom directory
-opensearchsql --remote "main https://github.com/opensearch-project/sql.git" -o /path/to/custom/directory
+opensearchsql --remote "https://github.com/opensearch-project/sql.git" -o /path/to/custom/directory
 ```
 
 ## Interactive Mode Commands
@@ -244,12 +248,13 @@ You can also configure the following connection properties:
 
 ### SQL Version Settings
 
-| Key            | Description                                  | Example                                                | Default  |
-|----------------|----------------------------------------------|--------------------------------------------------------|----------|
-| `version`      | Use Maven repository version (as a string)   | `"3.1"`                                                | `""`     |
-| `local`        | Use local JAR files with absolute path       | `"/path/to/sql/plugin/directory"`                      | `""`     |
-| `remote`       | Use git clone then use its local JAR files   | `"main https://github.com/opensearch-project/sql.git"` | `""`     |
-| `remote_output`| Custom directory for cloned repository       | `"/path/to/custom/directory"`                          | `""`     |
+| Key            | Description                                  | Example                                           | Default  |
+|----------------|----------------------------------------------|---------------------------------------------------|----------|
+| `version`      | Use Maven repository version (as a string)   | `"3.1"`                                           | `""`     |
+| `local`        | Use local JAR files with absolute path       | `"/path/to/sql/plugin/directory"`                 | `""`     |
+| `remote`       | Git repository URL to clone                  | `"https://github.com/opensearch-project/sql.git"` | `""`     |
+| `branch_name`  | Branch name to clone from the repository     | `"feature-branch"`                                | `""`     |
+| `remote_output`| Custom directory for cloned repository       | `"/path/to/custom/directory"`                     | `""`     |
 
 ### SQL Plugin Settings
 

@@ -125,7 +125,13 @@ class OpenSearchSQLCLI:
             remote: str = typer.Option(
                 None,
                 "--remote",
-                help='Clone from a git repository: --remote "<branch_name> <git_url>"',
+                help='Clone from a git repository: --remote "https://github.com/opensearch-project/sql.git"',
+            ),
+            branch: str = typer.Option(
+                None,
+                "--branch",
+                "-b",
+                help='Branch name to clone (defaults to config value or "main")',
             ),
             remote_output: str = typer.Option(
                 None,
@@ -191,28 +197,27 @@ class OpenSearchSQLCLI:
                     return
             elif remote_to_use:
                 # Remote git info provided
-                remote_parts = remote_to_use.split()
-                if len(remote_parts) >= 2:
-                    branch_name, git_url = remote_parts[0], remote_parts[1]
-
-                    # Get remote_output from config if not provided via command line
-                    if remote_output is None:
-                        remote_output = config_manager.get(
-                            "SqlVersion", "remote_output", ""
-                        )
-
-                    success = sql_version.set_remote_version(
-                        branch_name,
-                        git_url,
-                        rebuild=rebuild,
-                        remote_output=remote_output,
-                    )
-                    if not success:
-                        return
+                git_url = remote_to_use
+                
+                # Get branch name from config if not provided via command line
+                if branch is None:
+                    branch_name = config_manager.get("SqlVersion", "branch_name", "main")
                 else:
-                    console.print(
-                        "[bold red]ERROR:[/bold red] [red]Remote option requires both branch name and git URL[/red]"
+                    branch_name = branch
+                
+                # Get remote_output from config if not provided via command line
+                if remote_output is None:
+                    remote_output = config_manager.get(
+                        "SqlVersion", "remote_output", ""
                     )
+
+                success = sql_version.set_remote_version(
+                    branch_name,
+                    git_url,
+                    rebuild=rebuild,
+                    remote_output=remote_output,
+                )
+                if not success:
                     return
             else:
                 # Use the default latest version if no options provided
