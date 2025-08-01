@@ -90,8 +90,8 @@ class InteractiveShell:
                 -l <type>              - Change language: PPL, SQL
                 -f <type>              - Change format: JSON, Table, CSV
                 -v                     - Toggle vertical display mode
-                -s --save <name>       - Save the latest query result with a name
-                -s --load <name>       - Load and display a saved query result
+                -s --save <name>       - Save the latest query with a name
+                -s --load <name>       - Load and execute the saved query
                 -s --remove <name>     - Remove a saved query by name
                 -s --list              - List all saved query names
                 -h/help                - Show this help

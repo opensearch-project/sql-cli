@@ -152,9 +152,11 @@ To install the SQL CLI:
 | `-k`, `--insecure`                    | Ignore SSL certificate verification (use with `https` protocol)               |
 | `-l`, `--language` `<language>`       | Choose query language: `ppl` or `sql`                                         |
 | `-f`, `--format` `<format>`           | Set output format: `table`, `json`, or `csv`                                  |
+| `-q`, `--query` `<query>`             | Execute a query and exit (non-interactive mode)                               |
 | `--version` `<version>`               | Set OpenSearch SQL plugin version (e.g., `3.1`, `2.19`)                       |
 | `--local` `<directory>`               | Use a local directory containing the SQL plugin JAR                           |
 | `--remote` `<branch_name git_url>`    | Clone from a git repository with specified branch name and URL                |
+| `-o`, `--output` `<directory>`        | Custom output directory for cloned repository (used with `--remote`)          |
 | `--rebuild`                           | Rebuild or update the corresponding JAR file                                  |
 | `-c`, `--config`                      | Show current configuration values                                             |
 | `--help`                              | Show help message and usage examples                                          |
@@ -174,6 +176,9 @@ opensearchsql --aws-auth amazon.com
 # Use SQL and JSON output
 opensearchsql -l sql -f json
 
+# Single query execution
+opensearchsql -q "source=index_name"
+
 # Load specific plugin version
 opensearchsql --version 2.19
 
@@ -182,6 +187,9 @@ opensearchsql --local /path/to/sql/plugin/directory
 
 # Use a remote git repository
 opensearchsql --remote "main https://github.com/opensearch-project/sql.git"
+
+# Clone a repository to a custom directory
+opensearchsql --remote "main https://github.com/opensearch-project/sql.git" -o /path/to/custom/directory
 ```
 
 ## Interactive Mode Commands
@@ -192,8 +200,8 @@ opensearchsql --remote "main https://github.com/opensearch-project/sql.git"
 | `-l <type>`                      | Change language: `ppl`, `sql`                         |
 | `-f <type>`                      | Change output format: `table`, `json`, or `csv`       |
 | `-v`                             | Toggle vertical table display mode                    |
-| `-s --save <name>`               | Save the latest query result with a given name        |
-| `-s --load <name>`               | Load and display a saved query result                 |
+| `-s --save <name>`               | Save the latest query with a given name               |
+| `-s --load <name>`               | Load and execute a saved query                        |
 | `-s --remove <name>`             | Remove a saved query by name                          |
 | `-s --list`                      | List all saved query names                            |
 | `help`                           | Show this help message                                |
@@ -236,11 +244,12 @@ You can also configure the following connection properties:
 
 ### SQL Version Settings
 
-| Key        | Description                                  | Example                                                | Default  |
-|------------|----------------------------------------------|--------------------------------------------------------|----------|
-| `version`  | Use Maven repository version (as a string)   | `"3.1"`                                                | `""`     |
-| `local`    | Use local JAR files with absolute path       | `"/path/to/sql/plugin/directory"`                      | `""`     |
-| `remote`   | Use git clone then use its local JAR files   | `"main https://github.com/opensearch-project/sql.git"` | `""`     |
+| Key            | Description                                  | Example                                                | Default  |
+|----------------|----------------------------------------------|--------------------------------------------------------|----------|
+| `version`      | Use Maven repository version (as a string)   | `"3.1"`                                                | `""`     |
+| `local`        | Use local JAR files with absolute path       | `"/path/to/sql/plugin/directory"`                      | `""`     |
+| `remote`       | Use git clone then use its local JAR files   | `"main https://github.com/opensearch-project/sql.git"` | `""`     |
+| `remote_output`| Custom directory for cloned repository       | `"/path/to/custom/directory"`                          | `""`     |
 
 ### SQL Plugin Settings
 

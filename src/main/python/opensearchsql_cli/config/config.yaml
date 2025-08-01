@@ -42,12 +42,14 @@ Query:
 
 SqlVersion:
   # OpenSearch SQL plugin version, must do "" as a string
-  # version: use the Maven repository 
-  # local: use local jar files with absolute path
-  # remote: use git clone then use its local jar files
+  # version "version": use the Maven repository 
+  # local "path/to/sql": use local jar files with absolute path
+  # remote "branch_name url": use git clone then use its local jar files
+  # remote_output "path/to/save": path to save the repo to
   version: ""
   local: ""
-  remote: "2.19-dev https://github.com/opensearch-project/sql.git"
+  remote: ""
+  remote_output: ""
 
 SqlSettings:
   # Advanced settings for OpenSearch SQL plugin

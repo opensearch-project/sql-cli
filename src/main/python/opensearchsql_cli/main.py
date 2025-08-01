@@ -127,10 +127,22 @@ class OpenSearchSQLCLI:
                 "--remote",
                 help='Clone from a git repository: --remote "<branch_name> <git_url>"',
             ),
+            remote_output: str = typer.Option(
+                None,
+                "--output",
+                "-o",
+                help="Custom output directory for cloned repository (used with --remote)",
+            ),
             rebuild: bool = typer.Option(
                 False,
                 "--rebuild",
                 help="Rebuild the JAR file to update to latest timestamp version",
+            ),
+            query: str = typer.Option(
+                None,
+                "--query",
+                "-q",
+                help="Execute a query (non-interactive mode)",
             ),
             config: bool = typer.Option(
                 False,
@@ -148,24 +160,52 @@ class OpenSearchSQLCLI:
                 config_manager.display()
                 return
 
+            print("")
             # Version selection logic with priority
-            if version:
-                # Version provided via command line
-                success = sql_version.set_version(version=version, rebuild=rebuild)
+            # Command arg has priority over config then default
+            version_to_use = version
+            local_dir_to_use = local_dir
+            remote_to_use = remote
+
+            # If command line options not provided, try config file
+            if not (version_to_use or local_dir_to_use or remote_to_use):
+                version_to_use = config_manager.get("SqlVersion", "version", "")
+                local_dir_to_use = config_manager.get("SqlVersion", "local", "")
+                remote_to_use = config_manager.get("SqlVersion", "remote", "")
+
+            # Process based on which option is available
+            # --version > --local > --remote priority
+            if version_to_use:
+                # Version provided
+                success = sql_version.set_version(
+                    version=version_to_use, rebuild=rebuild
+                )
                 if not success:
                     return
-            elif local_dir:
-                # Local directory provided via command line
-                success = sql_version.set_local_version(local_dir, rebuild=rebuild)
+            elif local_dir_to_use:
+                # Local directory provided
+                success = sql_version.set_local_version(
+                    local_dir_to_use, rebuild=rebuild
+                )
                 if not success:
                     return
-            elif remote:
-                # Remote git info provided via command line
-                remote_parts = remote.split()
+            elif remote_to_use:
+                # Remote git info provided
+                remote_parts = remote_to_use.split()
                 if len(remote_parts) >= 2:
                     branch_name, git_url = remote_parts[0], remote_parts[1]
+
+                    # Get remote_output from config if not provided via command line
+                    if remote_output is None:
+                        remote_output = config_manager.get(
+                            "SqlVersion", "remote_output", ""
+                        )
+
                     success = sql_version.set_remote_version(
-                        branch_name, git_url, rebuild=rebuild
+                        branch_name,
+                        git_url,
+                        rebuild=rebuild,
+                        remote_output=remote_output,
                     )
                     if not success:
                         return
@@ -175,31 +215,10 @@ class OpenSearchSQLCLI:
                     )
                     return
             else:
-                # Try to get from config file
-                config_version = config_manager.get("SqlVersion", "version", "")
-                config_local = config_manager.get("SqlVersion", "local", "")
-                config_remote = config_manager.get("SqlVersion", "remote", "").split()
-
-                if config_version:
-                    success = sql_version.set_version(config_version, rebuild)
-                    if not success:
-                        return
-                elif config_local:
-                    success = sql_version.set_local_version(config_local, rebuild)
-                    if not success:
-                        return
-                elif len(config_remote) >= 2:
-                    branch_name, git_url = config_remote[0], config_remote[1]
-                    success = sql_version.set_remote_version(
-                        branch_name, git_url, rebuild
-                    )
-                    if not success:
-                        return
-                else:
-                    # Use the default latest version if no options provided
-                    success = sql_version.set_version(sql_version.version, rebuild)
-                    if not success:
-                        return
+                # Use the default latest version if no options provided
+                success = sql_version.set_version(sql_version.version, rebuild)
+                if not success:
+                    return
 
             # Get defaults from config if not provided
             if language is None:
@@ -231,13 +250,10 @@ class OpenSearchSQLCLI:
                 host_port = aws_auth
                 aws_auth = True
             elif config_manager.get_boolean("Connection", "aws_auth", False):
-                # Use the host from the config file with AWS SigV4 authentication
                 aws_auth = True
             else:
-                # Set aws_auth to False when not provided
                 aws_auth = False
 
-            print("")
             with console.status("Verifying OpenSearch connection...", spinner="dots"):
                 if not self.sql_connection.verify_opensearch_connection(
                     host_port, username_password, ignore_ssl, aws_auth
@@ -263,6 +279,16 @@ class OpenSearchSQLCLI:
                             f"[bold red]ERROR:[/bold red] [red]{self.sql_connection.error_message}[/red]\n"
                         )
                     return
+
+            # Execute single query non-interactive mode
+            if query:
+                # Initialize the interactive shell
+                self.shell.language_mode = language.lower()
+                self.shell.is_ppl_mode = language.lower() == "ppl"
+                self.shell.format = format.lower()
+                self.shell.execute_query(query)
+                print("")
+                return
 
             # print Banner
             banner = pyfiglet.figlet_format("OpenSearch", font="slant")

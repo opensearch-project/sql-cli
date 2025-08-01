@@ -81,6 +81,7 @@ class TestCommands:
         version=None,
         local=None,
         remote=None,
+        remote_output=None,
         rebuild=False,
         config=False,
         connection_success=True,
@@ -151,6 +152,7 @@ class TestCommands:
             ("Connection", "endpoint", ""): "",
             ("Connection", "username", ""): "",
             ("Connection", "password", ""): "",
+            ("SqlVersion", "remote_output", ""): remote_output or "",
         }.get((section, key, default), default)
 
         mock_config_manager.get_boolean.side_effect = lambda section, key, default: {
@@ -189,6 +191,8 @@ class TestCommands:
             command_args.extend(["--local", local])
         if remote:
             command_args.extend(["--remote", remote])
+        if remote_output:
+            command_args.extend(["--output", remote_output])
         if rebuild:
             command_args.append("--rebuild")
         if config:
@@ -556,9 +560,17 @@ class TestCommands:
                     remote_parts = value.split()
                     branch_name, git_url = remote_parts[0], remote_parts[1]
 
+                    # Get remote_output from mock_config_manager
+                    remote_output = mock_config_manager.get(
+                        "SqlVersion", "remote_output", ""
+                    )
+
                     # Check if set_remote_version was called with correct parameters
                     mock_version_manager.set_remote_version.assert_called_once_with(
-                        branch_name, git_url, rebuild=rebuild
+                        branch_name,
+                        git_url,
+                        rebuild=rebuild,
+                        remote_output=remote_output,
                     )
 
                     test_result = f"Remote git {value} set successfully"
@@ -567,9 +579,111 @@ class TestCommands:
                     remote_parts = value.split()
                     branch_name, git_url = remote_parts[0], remote_parts[1]
 
+                    # Get remote_output from mock_config_manager
+                    remote_output = mock_config_manager.get(
+                        "SqlVersion", "remote_output", ""
+                    )
+
                     mock_version_manager.set_remote_version.assert_called_once_with(
-                        branch_name, git_url, rebuild=rebuild
+                        branch_name,
+                        git_url,
+                        rebuild=rebuild,
+                        remote_output=remote_output,
                     )
                     test_result = f"Remote git {value} failed as expected"
+
+        self.print_test_info(f"{description} (Test #{test_id})", test_result)
+
+    @pytest.mark.parametrize(
+        "test_id, description, query, language, format, expected_success",
+        [
+            (
+                1,
+                "Query command success",
+                "SELECT * FROM accounts",
+                "sql",
+                "table",
+                True,
+            ),
+            (
+                2,
+                "PPL query command success",
+                "source=accounts",
+                "ppl",
+                "json",
+                True,
+            ),
+            (
+                3,
+                "Query missing argument",
+                None,
+                "ppl",
+                "table",
+                False,
+            ),
+        ],
+    )
+    @patch("opensearchsql_cli.main.sql_connection")
+    @patch("opensearchsql_cli.main.sql_library_manager")
+    @patch("opensearchsql_cli.main.sql_version")
+    @patch("opensearchsql_cli.main.config_manager")
+    @patch("opensearchsql_cli.main.console")
+    @patch("opensearchsql_cli.main.pyfiglet.figlet_format")
+    def test_query_command(
+        self,
+        mock_figlet,
+        mock_console,
+        mock_config_manager,
+        mock_version_manager,
+        mock_library_manager,
+        mock_sql_connection,
+        test_id,
+        description,
+        query,
+        language,
+        format,
+        expected_success,
+    ):
+        """
+        Test the -q/--query command for executing a query and exiting.
+        """
+        self.print_test_info(f"{description} (Test #{test_id})")
+
+        if query is None:
+            # Test missing argument case
+            result, test_result = self._check_missing_arg(
+                "-q", "Option '-q' requires an argument"
+            )
+        else:
+            # Setup test environment
+            cli, command_args = self.setup_cli_test(
+                mock_console,
+                mock_config_manager,
+                mock_version_manager,
+                mock_library_manager,
+                mock_sql_connection,
+                mock_figlet,
+                endpoint="test:9200",
+                language=language,
+                format=format,
+                connection_success=True,
+            )
+
+            # Add query parameter
+            command_args.extend(["-q", query])
+
+            # Execute the command
+            result = runner.invoke(cli.app, command_args)
+
+            # Verify the result
+            assert result.exit_code == 0
+
+            # Verify that execute_query was called with the correct query
+            cli.shell.execute_query.assert_called_once_with(query)
+
+            # Verify that shell.start was NOT called (CLI should exit after executing query)
+            cli.shell.start.assert_not_called()
+
+            test_result = f"Query '{query}' executed successfully with language={language}, format={format}"
 
         self.print_test_info(f"{description} (Test #{test_id})", test_result)

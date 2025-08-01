@@ -69,12 +69,12 @@ class TestSqlVersion:
             if "invalid" in version:
                 # Invalid format case
                 mock_console.print.assert_any_call(
-                    f"[bold red]\nERROR:[/bold red] [red]Version {version} is currently not supported.[/red]"
+                    f"[bold red]ERROR:[/bold red] [red]Version {version} is currently not supported[/red]"
                 )
             else:
                 # Unsupported version case
                 mock_console.print.assert_any_call(
-                    f"[bold red]\nERROR:[/bold red] [red]Version {version} is currently not supported.[/red]"
+                    f"[bold red]ERROR:[/bold red] [red]Version {version} is currently not supported[/red]"
                 )
 
     @patch("opensearchsql_cli.sql.sql_version.os.path.exists")
@@ -126,7 +126,7 @@ class TestSqlVersion:
         assert result is True
         mock_run.assert_called_once()
         mock_console.print.assert_any_call(
-            "[bold green]SUCCESS:[/bold green] [green]Built v3.1.0.0 successfully at /mock/path/opensearchsqlcli-3.1.0.0.jar[/green]"
+            "[bold green]SUCCESS:[/bold green] [green]Built SQL CLI at /mock/path/opensearchsqlcli-3.1.0.0.jar[/green]"
         )
 
     @patch("opensearchsql_cli.sql.sql_version.PROJECT_ROOT", "/mock/project_root")
