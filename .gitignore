@@ -23,8 +23,6 @@ var/
 .installed.cfg
 *.egg
 remote/
-# include datasources submodule
-!build/libs/datasources-3.1.0.0-SNAPSHOT.jar
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

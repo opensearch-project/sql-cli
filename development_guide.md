@@ -133,6 +133,7 @@ org.opensearch.query:unified-query-opensearch:3.1.0.0-SNAPSHOT
 org.opensearch.query:unified-query-ppl:3.1.0.0-SNAPSHOT
 org.opensearch.query:unified-query-sql:3.1.0.0-SNAPSHOT
 org.opensearch.query:unified-query-protocol:3.1.0.0-SNAPSHOT
+org.opensearch.query:unified-query-datasources:3.1.0.0-SNAPSHOT
 org.opensearch.client:opensearch-rest-high-level-client:3.1.0
 org.opensearch.client:opensearch-rest-client:3.1.0
 org.opensearch.client:opensearch-java:3.1.0

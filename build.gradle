@@ -83,7 +83,7 @@ ext.getHttpClientInfo = { ->
 
 
 ext {
-    submodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol']
+    submodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol', 'datasources']
     
     // Global variable to determine if version is 3 or above
     // Initialize with default value, will be updated when needed
@@ -94,9 +94,6 @@ ext {
 
     // Common dependencies shared across all versions
     sharedDeps = [
-        // Using datasources submodule locally since it's not in the maven
-        // will remove after the PR merge in sql repo
-        files('build/libs/datasources-3.1.0.0-SNAPSHOT.jar'),
         // OpenSearch
         'org.apache.calcite:calcite-core:1.40.0',
         'com.facebook.presto:presto-matching:0.293',
