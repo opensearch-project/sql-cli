@@ -92,10 +92,10 @@ The CLI supports three methods for specifying the SQL version:
      ./gradlew 3_1_0_0_local -PlocalJarDir=/path/to/sql/plugin/directory
      ```
 
-3. **Remote Git Repository** (e.g., `opensearchsql --remote "main https://github.com/opensearch-project/sql.git"`):
+3. **Remote Git Repository** (e.g., `opensearchsql --remote https://github.com/opensearch-project/sql.git -b <branch_name>`):
    - Clones the specified git repository and branch using:
      ```bash
-     git clone --branch <git_branch> --single-branch <git_url>
+     git clone --branch <branch_name> --single-branch <git_url>
      ```
    - Extracts the version from the cloned repository's JAR files
    - Builds a local version-specific JAR using the cloned repository
