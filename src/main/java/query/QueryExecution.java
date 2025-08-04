@@ -128,7 +128,7 @@ public class QueryExecution {
 
       if (errorRef.get() != null) {
         errorRef.get().printStackTrace();
-        return "queryExecution Error: " + errorRef.get();
+        return "Query Execution " + errorRef.get();
       }
 
       // Handle the response based on the query type

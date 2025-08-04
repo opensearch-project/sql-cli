@@ -66,24 +66,10 @@ public class Client5 {
 
       HttpHost host = new HttpHost("https", awsEndpoint, 443);
 
-      // Create a custom interceptor to handle request signing
+      // Create the AWS SigV4 interceptor
       HttpRequestInterceptor interceptor =
-          new HttpRequestInterceptor() {
-            @Override
-            public void process(HttpRequest request, EntityDetails entity, HttpContext context) {
-              // Create and apply the AWS SigV4 interceptor
-              try {
-                AwsRequestSigningApacheV5Interceptor awsInterceptor =
-                    new AwsRequestSigningApacheV5Interceptor(
-                        serviceName, AwsV4HttpSigner.create(), credentialsProvider, region);
-                awsInterceptor.process(request, entity, context);
-
-              } catch (Exception e) {
-                System.err.println("Error in AWS request signing: " + e.getMessage());
-                e.printStackTrace();
-              }
-            }
-          };
+          new AwsRequestSigningApacheV5Interceptor(
+              serviceName, AwsV4HttpSigner.create(), credentialsProvider, region);
 
       // Add URI modification and logging interceptors
       HttpRequestInterceptor newShowURI = createNewShowURI();
