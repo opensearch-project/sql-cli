@@ -84,7 +84,11 @@ ext.getHttpClientInfo = { ->
 
 ext {
     submodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol', 'datasources']
-    
+
+    // TODO: will need to see why using datasources on Maven fails
+    // but using local jar file works
+    mavenSubmodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol']
+
     // Global variable to determine if version is 3 or above
     // Initialize with default value, will be updated when needed
     isV3orAbove = false
@@ -375,9 +379,12 @@ ext.createVersionConfigurations = { String version ->
         configureRuntimeConfiguration(version, configName, dependencyConfigName)
 
         // Add unified-query dependencies
-        project.ext.submodules.each { name ->
+        project.ext.mavenSubmodules.each { name ->
             dependencies.add(configName, "org.opensearch.query:unified-query-${name}:${version}-SNAPSHOT")
         }
+        
+        // Add datasources JAR file
+        dependencies.add(configName, files('submodule/datasources-3.1.0.0-SNAPSHOT.jar'))
 
         // Add OpenSearch client dependencies with appropriate version
         def clientVersion = project.ext.getOpenSearchClientVersion(version)
