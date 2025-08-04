@@ -50,7 +50,7 @@ Python CLI Layer → Py4J Bridge → Java Gateway → OpenSearch Client → Open
 
 ##### Python Components
 
-- **OpenSearchSQLCLI** (`main.py`): Entry point for the CLI, processes command-line arguments
+- **OpenSearchSqlCli** (`main.py`): Entry point for the CLI, processes command-line arguments
 - **InteractiveShell** (`interactive_shell.py`): Manages the interactive shell, command history, and user input
 - **ExecuteQuery** (`execute_query.py`): Handles query execution and result formatting
 - **SqlConnection** (`sql_connection.py`): Manages connection to the Java gateway

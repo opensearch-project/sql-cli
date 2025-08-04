@@ -56,6 +56,11 @@ This CLI acts as a safe testing environment, allowing smooth transitions between
 [sql-cli-build-badge]: https://github.com/opensearch-project/sql-cli/actions/workflows/sql-cli-test-and-build-workflow.yml/badge.svg
 [sql-cli-build-link]: https://github.com/opensearch-project/sql-cli/actions/workflows/sql-cli-test-and-build-workflow.yml
 
+## Requirements
+
+- **Python** version 3.9+
+- **Java** version 21
+
 ## Features
 
 - **Multi-line input**

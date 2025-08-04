@@ -75,7 +75,7 @@ SqlSettings:
 
 File:
   # SQL library log location.
-  # Default: "src/main/java/sql_library.log"
+  # Default: "logs/sql_library.log"
   sql_log: ""
 
   # CLI command history file location.

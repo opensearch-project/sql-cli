@@ -8,7 +8,7 @@ import pytest
 import os
 from unittest.mock import patch, MagicMock
 from typer.testing import CliRunner
-from ..main import OpenSearchSQLCLI
+from ..main import OpenSearchSqlCli
 
 # Create a CLI runner for testing
 runner = CliRunner()
@@ -51,7 +51,7 @@ class TestCommands:
                 - test_result: A string describing the test result
         """
         # Create a CLI instance with mocked shell
-        cli = OpenSearchSQLCLI()
+        cli = OpenSearchSqlCli()
         cli.shell = MagicMock()
 
         # Invoke the CLI with the flag but no argument
@@ -165,7 +165,7 @@ class TestCommands:
             mock_figlet.return_value = "OpenSearch"
 
         # Create a CLI instance with mocked dependencies
-        cli = OpenSearchSQLCLI()
+        cli = OpenSearchSqlCli()
 
         # Mock the shell attribute to prevent it from being called
         if not config:
@@ -558,10 +558,12 @@ class TestCommands:
                 if version_success:
                     # Get git URL from value
                     git_url = value
-                    
+
                     # Get branch name from config (default to "main")
-                    branch_name = mock_config_manager.get("SqlVersion", "branch_name", "main")
-                    
+                    branch_name = mock_config_manager.get(
+                        "SqlVersion", "branch_name", "main"
+                    )
+
                     # Get remote_output from mock_config_manager
                     remote_output = mock_config_manager.get(
                         "SqlVersion", "remote_output", ""
@@ -579,10 +581,12 @@ class TestCommands:
                 else:
                     # Get git URL from value
                     git_url = value
-                    
+
                     # Get branch name from config (default to "main")
-                    branch_name = mock_config_manager.get("SqlVersion", "branch_name", "main")
-                    
+                    branch_name = mock_config_manager.get(
+                        "SqlVersion", "branch_name", "main"
+                    )
+
                     # Get remote_output from mock_config_manager
                     remote_output = mock_config_manager.get(
                         "SqlVersion", "remote_output", ""

@@ -8,12 +8,16 @@ using vcrpy to record and replay HTTP interactions.
 
 import pytest
 import vcr
+import os
 from unittest.mock import patch, MagicMock
 from opensearchsql_cli.sql.verify_cluster import VerifyCluster
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+CASSETTES_DIR = os.path.join(CURRENT_DIR, "vcr_cassettes")
+
 # Create a custom VCR instance with specific settings
 my_vcr = vcr.VCR(
-    cassette_library_dir="sql/vcr_cassettes",
+    cassette_library_dir=CASSETTES_DIR,
     record_mode="once",
     match_on=["uri", "method"],
     filter_headers=["authorization"],  # Don't record authorization headers

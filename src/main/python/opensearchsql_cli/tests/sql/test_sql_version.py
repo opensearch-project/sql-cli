@@ -124,7 +124,7 @@ class TestSqlVersion:
 
         # Assertions
         assert result is True
-        mock_run.assert_called_once()
+        assert mock_run.call_count == 2
         mock_console.print.assert_any_call(
             "[bold green]SUCCESS:[/bold green] [green]Built SQL CLI at /mock/path/opensearchsqlcli-3.1.0.0.jar[/green]"
         )

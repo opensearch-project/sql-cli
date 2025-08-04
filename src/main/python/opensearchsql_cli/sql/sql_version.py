@@ -320,7 +320,7 @@ class SqlVersion:
             f"[bold yellow]Creating SQL JARs in {local_dir}...[/bold yellow]",
             spinner="dots",
         ):
-            log_file = os.path.join(PROJECT_ROOT, "sql_build.log")
+            log_file = os.path.join(PROJECT_ROOT, "logs", "sql_build.log")
             with open(log_file, "w") as file:
                 result = subprocess.run(
                     ["./gradlew", "clean", "assemble"],
@@ -363,16 +363,16 @@ class SqlVersion:
         if local_dir:
             gradle_task += "_local"
 
-        if rebuild or not os.path.exists(jar_path):
-            if rebuild and os.path.exists(jar_path):
-                console.print(
-                    f"[bold yellow]INFO:[/bold yellow] [yellow]Rebuilding SQL CLI at {jar_path}[/yellow]"
-                )
-            else:
-                console.print(
-                    f"[bold yellow]WARNING:[/bold yellow] [yellow]SQL CLI does not exist[/yellow]"
-                )
+        # Run ./gradlew clean if rebuild
+        if rebuild:
+            subprocess.run(
+                ["./gradlew", "clean"],
+                cwd=PROJECT_ROOT,
+                capture_output=True,
+                text=True,
+            )
 
+        if not os.path.exists(jar_path):
             cmd_args = ["./gradlew", gradle_task]
 
             # Add localJarDir property for local builds
@@ -383,7 +383,7 @@ class SqlVersion:
                 f"[bold yellow]Building SQL CLI v{self.version}...[/bold yellow]",
                 spinner="dots",
             ):
-                log_file = os.path.join(PROJECT_ROOT, "sqlcli_build.log")
+                log_file = os.path.join(PROJECT_ROOT, "logs", "sqlcli_build.log")
                 with open(log_file, "w") as file:
                     result = subprocess.run(
                         cmd_args,

@@ -23,7 +23,7 @@ from .interactive_shell import InteractiveShell
 console = Console()
 
 
-class OpenSearchSQLCLI:
+class OpenSearchSqlCli:
     """
     OpenSearch SQL CLI class for managing command-line interface and interactive mode
     """
@@ -198,13 +198,15 @@ class OpenSearchSQLCLI:
             elif remote_to_use:
                 # Remote git info provided
                 git_url = remote_to_use
-                
+
                 # Get branch name from config if not provided via command line
                 if branch is None:
-                    branch_name = config_manager.get("SqlVersion", "branch_name", "main")
+                    branch_name = config_manager.get(
+                        "SqlVersion", "branch_name", "main"
+                    )
                 else:
                     branch_name = branch
-                
+
                 # Get remote_output from config if not provided via command line
                 if remote_output is None:
                     remote_output = config_manager.get(
@@ -345,7 +347,7 @@ def main():
         signal.signal(signal.SIGTERM, signal_handler)
 
         # Create CLI instance
-        cli = OpenSearchSQLCLI()
+        cli = OpenSearchSqlCli()
 
         # Run the Typer app
         return cli.app()

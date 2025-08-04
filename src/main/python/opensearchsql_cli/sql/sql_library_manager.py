@@ -116,7 +116,7 @@ class SqlLibraryManager:
                 log_file = config_log_file
             else:
                 # Use default log file path
-                log_file = os.path.join(JAVA_DIR, "sql_library.log")
+                log_file = os.path.join(PROJECT_ROOT, "logs", "sql_library.log")
 
             # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(log_file), exist_ok=True)
