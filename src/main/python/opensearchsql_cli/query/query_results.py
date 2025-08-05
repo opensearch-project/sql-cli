@@ -142,15 +142,12 @@ class QueryResults:
                     return {"message": message, "table": table, "vertical": False}
             else:
                 # If not in a recognized format, return as is
-                console.print("[bold red]Error formatting.[/bold red]")
                 return {"message": "Error formatting.", "error": True, "result": result}
         except json.JSONDecodeError:
             # If not valid JSON, return as is
-            console.print("[bold red]Error decoding JSON.[/bold red]")
             return {"message": "Error decoding JSON.", "error": True, "result": result}
         except Exception as e:
             # Handle other exceptions
-            console.print(f"[bold red]Error during formatting:[/bold red] {e}")
             return {
                 "message": f"Error during formatting: {e}",
                 "error": True,
