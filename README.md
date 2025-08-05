@@ -58,7 +58,7 @@ This CLI acts as a safe testing environment, allowing smooth transitions between
 
 ## Requirements
 
-- **Python** version 3.9+
+- **Python** version 3.12+
 - **Java** version 21
 
 ## Features
