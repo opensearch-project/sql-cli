@@ -43,6 +43,8 @@ import org.opensearch.sql.opensearch.request.OpenSearchRequest;
 import org.opensearch.sql.opensearch.request.OpenSearchScrollRequest;
 import org.opensearch.sql.opensearch.response.OpenSearchResponse;
 import org.opensearch.transport.client.node.NodeClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * OpenSearch REST client to support standalone mode that runs entire engine from remote.
@@ -50,6 +52,7 @@ import org.opensearch.transport.client.node.NodeClient;
  * <p>TODO: Support for authN and authZ with AWS Sigv4 or security plugin.
  */
 public class OpenSearchRestClientImpl implements OpenSearchClient {
+  private static final Logger logger = LoggerFactory.getLogger("OpenSearchRestClientImpl");
 
   /** OpenSearch high level REST client. */
   private final RestHighLevelClient client;
@@ -60,7 +63,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
   @Override
   public boolean exists(String indexName) {
-    System.out.println("OpenSearchRestClientImpl.exists()");
+    logger.info("Checking if index exists: {}", indexName);
     try {
       return client.indices().exists(new GetIndexRequest(indexName), RequestOptions.DEFAULT);
     } catch (IOException e) {
@@ -70,7 +73,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
   @Override
   public void createIndex(String indexName, Map<String, Object> mappings) {
-    System.out.println("OpenSearchRestClientImpl.createIndex()");
+    logger.info("Creating index: {}", indexName);
     try {
       client
           .indices()
@@ -82,7 +85,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
   @Override
   public Map<String, IndexMapping> getIndexMappings(String... indexExpression) {
-    System.out.println("OpenSearchRestClientImpl.getIndexMappings()");
+    logger.info("Getting index mappings for: {}", Arrays.toString(indexExpression));
     GetMappingsRequest request = new GetMappingsRequest().indices(indexExpression);
     try {
       GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
@@ -95,7 +98,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
   @Override
   public Map<String, Integer> getIndexMaxResultWindows(String... indexExpression) {
-    System.out.println("OpenSearchRestClientImpl.getIndexMaxResultWindows()");
+    logger.info("Getting max result windows for: {}", Arrays.toString(indexExpression));
     GetSettingsRequest request =
         new GetSettingsRequest().indices(indexExpression).includeDefaults(true);
     try {
@@ -128,22 +131,18 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
   @Override
   public OpenSearchResponse search(OpenSearchRequest request) {
-    System.out.println(
-        "OpenSearchRestClientImpl.search() - request type: " + request.getClass().getSimpleName());
+    logger.info("Search request type: {}", request.getClass().getSimpleName());
 
     if (request instanceof OpenSearchScrollRequest) {
       OpenSearchScrollRequest scrollRequest = (OpenSearchScrollRequest) request;
-      System.out.println(
-          "Scroll request - Index names: "
-              + Arrays.toString(scrollRequest.getIndexName().getIndexNames()));
-      System.out.println("Scroll request - Scroll ID: " + scrollRequest.getScrollId());
-      System.out.println("Scroll request - Scroll timeout: " + scrollRequest.getScrollTimeout());
-      System.out.println("Scroll request - Is scroll: " + scrollRequest.isScroll());
+      logger.info(
+          "Scroll request - Index names: {}",
+          Arrays.toString(scrollRequest.getIndexName().getIndexNames()));
     } else if (request instanceof OpenSearchQueryRequest) {
       OpenSearchQueryRequest queryRequest = (OpenSearchQueryRequest) request;
-      System.out.println(
-          "Query request - Index names: "
-              + Arrays.toString(queryRequest.getIndexName().getIndexNames()));
+      logger.info(
+          "Query request - Index names: {}",
+          Arrays.toString(queryRequest.getIndexName().getIndexNames()));
 
       // Get the source builder and save it to a file for the AWS interceptor to use
       // Set up similar to OpenSearchQueryRequest.java
@@ -153,7 +152,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
         String dslQuery;
 
         if (pitId != null) {
-          System.out.println("Query request - PIT ID: " + pitId);
+          logger.info("Query request - PIT ID: {}", pitId);
           // Configure PIT search request using the existing pitId
           sourceBuilder.pointInTimeBuilder(new PointInTimeBuilder(pitId));
           sourceBuilder.timeout(queryRequest.getCursorKeepAlive());
@@ -166,7 +165,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
           // Set sort field for search_after
           if (sourceBuilder.sorts() == null) {
-            System.out.println("Adding default sort fields for PIT");
+            logger.info("Adding default sort fields for PIT");
             sourceBuilder.sort("_doc", SortOrder.ASC);
             // Workaround to preserve sort location more exactly
             // see https://github.com/opensearch-project/sql/pull/3061
@@ -176,12 +175,12 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
         // Convert the final source builder to a string
         dslQuery = sourceBuilder.toString();
-        System.out.println("Query request - Source builder: " + dslQuery);
+        logger.info("Query request - Source builder: {}", dslQuery);
 
         // Write the DSL query to a file for the AWS interceptor to use
         writeForAwsBody(dslQuery);
       } else {
-        System.out.println("Query request - Source builder: null");
+        logger.info("Query request - Source builder: null");
       }
     }
     return request.search(
@@ -210,7 +209,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
    */
   @Override
   public List<String> indices() {
-    System.out.println("OpenSearchRestClientImpl.indices()");
+    logger.info("Getting indices");
     try {
       GetIndexResponse indexResponse =
           client.indices().get(new GetIndexRequest(), RequestOptions.DEFAULT);
@@ -232,7 +231,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
    */
   @Override
   public Map<String, String> meta() {
-    System.out.println("OpenSearchRestClientImpl.meta()");
+    logger.info("Getting cluster meta info");
     try {
       final ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<>();
       ClusterGetSettingsRequest request = new ClusterGetSettingsRequest();
@@ -251,7 +250,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
   @Override
   public void cleanup(OpenSearchRequest request) {
-    System.out.println("OpenSearchRestClientImpl.cleanup()");
+    logger.info("Cleaning up resources for request");
     if (request instanceof OpenSearchScrollRequest) {
       request.clean(
           scrollId -> {
@@ -275,18 +274,19 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
   @Override
   public void schedule(Runnable task) {
-    System.out.println("OpenSearchRestClientImpl.schedule()");
+    logger.info("Scheduling task");
     task.run();
   }
 
   @Override
   public NodeClient getNodeClient() {
+    logger.info("Node Client is not supported");
     throw new UnsupportedOperationException("Unsupported method.");
   }
 
   @Override
   public String createPit(CreatePitRequest createPitRequest) {
-    System.out.println("OpenSearchRestClientImpl.createPit()");
+    logger.info("Creating PIT");
 
     try {
       // For the AWS interceptor to use
@@ -296,7 +296,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
       CreatePitResponse createPitResponse =
           client.createPit(createPitRequest, RequestOptions.DEFAULT);
       String pitId = createPitResponse.getId();
-      System.out.println("PIT created successfully with ID: " + pitId);
+      logger.info("PIT created successfully with ID: {}", pitId);
       return pitId;
     } catch (IOException e) {
       throw new RuntimeException("Error occurred while creating PIT for new engine SQL query", e);
@@ -305,7 +305,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
 
   @Override
   public void deletePit(DeletePitRequest deletePitRequest) {
-    System.out.println("OpenSearchRestClientImpl.deletePit()");
+    logger.info("Deleting PIT");
 
     try {
       // For the AWS interceptor to use
@@ -316,7 +316,7 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
           client.deletePit(deletePitRequest, RequestOptions.DEFAULT);
 
     } catch (IOException e) {
-      throw new RuntimeException("Error occurred while creating PIT for new engine SQL query", e);
+      throw new RuntimeException("Error occurred while deleting PIT", e);
     }
   }
 
@@ -332,8 +332,8 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
     }
 
     String jsonBody = builder.toString();
-    System.out.println("===== " + request.getClass().getSimpleName() + " Body Content =====");
-    System.out.println(jsonBody);
+    logger.info("===== {} Body Content =====", request.getClass().getSimpleName());
+    logger.info("{}", jsonBody);
     return jsonBody;
   }
 
@@ -341,10 +341,9 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
     File dslFile = new File("src/main/java/client/http5/aws/aws_body.json");
     try (FileWriter writer = new FileWriter(dslFile)) {
       writer.write(content);
-      System.out.println("Wrote DSL query to file: " + dslFile.getAbsolutePath());
+      logger.info("Wrote DSL query to file: {}", dslFile.getAbsolutePath());
     } catch (IOException e) {
-      System.err.println("Failed to write DSL query to file: " + e.getMessage());
-      e.printStackTrace();
+      logger.error("Failed to write DSL query to file: {}", e.getMessage());
     }
   }
 }

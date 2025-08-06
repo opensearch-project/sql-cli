@@ -26,8 +26,27 @@ import org.opensearch.sql.protocol.response.format.ResponseFormatter;
 import org.opensearch.sql.protocol.response.format.SimpleJsonResponseFormatter;
 import org.opensearch.sql.sql.SQLService;
 import org.opensearch.sql.sql.domain.SQLQueryRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class QueryExecution {
+  private static final Logger logger = LoggerFactory.getLogger("QueryExecution");
+
+  // API paths
+  private static final String EXPLAIN_PATH = "/_explain";
+  private static final String PPL_PATH = "/_plugins/_ppl";
+  private static final String SQL_PATH = "/_plugins/_sql";
+
+  // Format constants
+  private static final String FORMAT_CSV = "csv";
+  private static final String FORMAT_JSON = "json";
+  private static final String FORMAT_COMPACT_JSON = "compact_json";
+  private static final String FORMAT_JDBC = "jdbc";
+  private static final String FORMAT_RAW = "raw";
+  private static final String FORMAT_TABLE = "table";
+
+  // Query type indicators
+  private static final String EXPLAIN_PREFIX = "explain";
 
   private final PPLService pplService;
   private final SQLService sqlService;
@@ -39,12 +58,12 @@ public class QueryExecution {
   }
 
   public String execute(String query, boolean isPPL) {
-    return execute(query, isPPL, "json");
+    return execute(query, isPPL, FORMAT_JSON);
   }
 
   public String execute(String query, boolean isPPL, String format) {
-    System.out.println("Received query: " + query);
-    System.out.println("Query type: " + (isPPL ? "PPL" : "SQL"));
+    logger.info("Received query: " + query);
+    logger.info("Query type: " + (isPPL ? "PPL" : "SQL"));
 
     try {
       CountDownLatch latch = new CountDownLatch(1);
@@ -55,14 +74,14 @@ public class QueryExecution {
           new ResponseListener<>() {
             @Override
             public void onResponse(QueryResponse response) {
-              System.out.println("Execute Result: " + response);
+              logger.info("Execute Result: " + response);
               executeRef.set(response);
               latch.countDown();
             }
 
             @Override
             public void onFailure(Exception e) {
-              System.out.println("queryExecution Execution Error: " + e);
+              logger.error("Execution Error: " + e);
               errorRef.set(e);
               latch.countDown();
             }
@@ -72,54 +91,47 @@ public class QueryExecution {
           new ResponseListener<>() {
             @Override
             public void onResponse(ExplainResponse response) {
-              System.out.println("Explain response: " + response);
+              logger.info("Explain Result: " + response);
               explainRef.set(response);
               latch.countDown();
             }
 
             @Override
             public void onFailure(Exception e) {
-              System.out.println("queryExecution Explain Error: " + e);
+              logger.error("Explain Error: " + e);
               errorRef.set(e);
               latch.countDown();
             }
           };
 
       // Check if this is an explain query
-      boolean isExplainQuery = query.trim().toLowerCase().startsWith("explain");
+      boolean isExplainQuery = query.trim().toLowerCase().startsWith(EXPLAIN_PREFIX);
 
       if (isPPL) {
-        System.out.println("Executing PPL query...");
-        // For explain queries, set the path to "/_explain"
-        String path = isExplainQuery ? "/_explain" : "/_plugins/_ppl";
+        logger.info("Executing PPL query...");
+        // For explain queries, set the appropriate path
+        String path = isExplainQuery ? EXPLAIN_PATH : PPL_PATH;
         PPLQueryRequest pplRequest = new PPLQueryRequest(query, new JSONObject(), path, "");
 
         if (isExplainQuery) {
-          System.out.println("Calling pplService.explain()");
           pplService.explain(pplRequest, explainListener);
         } else {
-          System.out.println("Calling pplService.execute()");
           pplService.execute(pplRequest, queryListener, explainListener);
         }
       } else {
-        System.out.println("Executing SQL query...");
+        logger.info("Executing SQL query...");
 
         if (isExplainQuery) {
           // Remove "explain" prefix
           String actualQuery = query.substring(7).trim();
-          System.out.println("SQL explain query for: " + actualQuery);
 
-          String path = "/_explain";
+          String path = EXPLAIN_PATH;
           SQLQueryRequest sqlRequest = new SQLQueryRequest(new JSONObject(), actualQuery, path, "");
-
-          System.out.println("Calling sqlService.execute() with explain path");
           sqlService.execute(sqlRequest, queryListener, explainListener);
         } else {
           // Regular SQL query
-          String path = "/_plugins/_sql";
+          String path = SQL_PATH;
           SQLQueryRequest sqlRequest = new SQLQueryRequest(new JSONObject(), query, path, "");
-
-          System.out.println("Calling sqlService.execute()");
           sqlService.execute(sqlRequest, queryListener, explainListener);
         }
       }
@@ -127,15 +139,12 @@ public class QueryExecution {
       latch.await();
 
       if (errorRef.get() != null) {
-        errorRef.get().printStackTrace();
-        return "Query execution fails because " + errorRef.get();
+        return errorRef.get().toString();
       }
 
       // Handle the response based on the query type
       if (isExplainQuery && explainRef.get() != null) {
-        System.out.println("Explain raw: \n" + explainRef.get().toString());
         return formatExplainResponse(explainRef.get(), format);
-        // return explainRef.get().toString();
       } else if (executeRef.get() != null && executeRef.get().getResults() != null) {
         // For regular queries, use the query response
         QueryResponse response = executeRef.get();
@@ -150,22 +159,22 @@ public class QueryExecution {
           ResponseFormatter<QueryResult> formatter = null;
 
           switch (format.toLowerCase()) {
-            case "csv":
+            case FORMAT_CSV:
               formatter = new CsvResponseFormatter();
               break;
-            case "json":
+            case FORMAT_JSON:
               formatter = new SimpleJsonResponseFormatter(JsonResponseFormatter.Style.PRETTY);
               break;
-            case "compact_json":
+            case FORMAT_COMPACT_JSON:
               formatter = new SimpleJsonResponseFormatter(JsonResponseFormatter.Style.COMPACT);
               break;
-            case "jdbc":
+            case FORMAT_JDBC:
               formatter = new JdbcResponseFormatter(JsonResponseFormatter.Style.PRETTY);
               break;
-            case "raw":
+            case FORMAT_RAW:
               formatter = new RawResponseFormatter();
               break;
-            case "table":
+            case FORMAT_TABLE:
               formatter = new JdbcResponseFormatter(JsonResponseFormatter.Style.PRETTY);
               break;
             default:
@@ -175,15 +184,15 @@ public class QueryExecution {
 
           return formatter.format(queryResult);
         } catch (Exception e) {
-          e.printStackTrace();
-          return "Error formatting results: " + e.getMessage() + "\nRaw response: " + response;
+          logger.error("Error formatting result: ", e);
+          return e.toString();
         }
       } else {
         return "No results";
       }
     } catch (Exception e) {
-      e.printStackTrace();
-      return "queryExecution Error: " + e;
+      logger.error("Execution Error: ", e);
+      return e.toString();
     }
   }
 
@@ -198,14 +207,11 @@ public class QueryExecution {
               return response;
             }
           }.format(response);
-
-      System.out.println("After explain format: \n" + formatOutput);
-
       return formatOutput;
 
     } catch (Exception e) {
-      e.printStackTrace();
-      return "Error formatting explain results: " + e.getMessage() + "\nRaw response: " + response;
+      logger.error("Error formatting explain result: ", e);
+      return e.toString();
     }
   }
 }

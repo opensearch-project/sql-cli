@@ -13,47 +13,20 @@ import org.apache.commons.configuration2.YAMLConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.sql.common.setting.Settings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Configuration handler for OpenSearch CLI Reads settings from the configuration file using Apache
  * Commons Configuration
  */
 public class Config {
-  // Get the config file path relative to the project root
-  private static final String DEFAULT_CONFIG_DIR = findConfigDir();
-  private static final String CONFIG_FILE_NAME = "config.yaml";
+  private static final Logger logger = LoggerFactory.getLogger("Config");
 
-  /**
-   * Find the config directory relative to the project root
-   *
-   * @return Path to the config directory
-   */
-  private static String findConfigDir() {
-    try {
-      // Start with the current working directory (project root)
-      String projectRoot = System.getProperty("user.dir");
-
-      // Config path relative to project root
-      String configPath = projectRoot + "/main/opensearchsql_cli/config";
-
-      // Check if the config directory exists
-      File configDir = new File(configPath);
-      if (configDir.exists() && configDir.isDirectory()) {
-        System.out.println("Found config directory at: " + configPath);
-        return configPath;
-      }
-
-      // Fallback to the working directory
-      System.out.println("Config directory not found, using working directory: " + projectRoot);
-      return projectRoot;
-    } catch (Exception e) {
-      // Fallback to user.dir if anything goes wrong
-      String fallback = System.getProperty("user.dir");
-      System.err.println(
-          "Error finding config directory: " + e.getMessage() + ", using: " + fallback);
-      return fallback;
-    }
-  }
+  // Config file path
+  private static final String PROJECT_ROOT = System.getProperty("user.dir");
+  private static final String CONFIG_FILE =
+      PROJECT_ROOT + "/src/main/python/opensearchsql_cli/config/config.yaml";
 
   private static YAMLConfiguration yamlConfig = null;
 
@@ -149,14 +122,12 @@ public class Config {
         }
 
       } catch (Exception e) {
-        System.err.println("Error parsing settings from config file: " + e.getMessage());
-        e.printStackTrace();
+        logger.error("Error parsing settings from config file: " + e.getMessage(), e);
       }
 
       return settings;
     } catch (Exception e) {
-      System.err.println("Error reading config file: " + e.getMessage());
-      e.printStackTrace();
+      logger.error("Error reading config file: " + e.getMessage(), e);
       return defaultSettings;
     }
   }
@@ -168,27 +139,21 @@ public class Config {
     }
 
     try {
-      // Get the config file path
-      String configFile = DEFAULT_CONFIG_DIR + "/" + CONFIG_FILE_NAME;
-
-      System.out.println("Looking for YAML config file at: " + configFile);
-
       // Check if config file exists
-      File file = new File(configFile);
+      File file = new File(CONFIG_FILE);
       if (!file.exists()) {
-        System.out.println("Config file not found: " + configFile);
+        logger.info("Config file not found: " + CONFIG_FILE);
         yamlConfig = new YAMLConfiguration();
         return;
       }
 
-      // Read the config file
+      logger.info("Found config file at: " + CONFIG_FILE);
       yamlConfig = new YAMLConfiguration();
       try (FileReader reader = new FileReader(file)) {
         yamlConfig.read(reader);
       }
-
     } catch (IOException | ConfigurationException e) {
-      System.err.println("Error loading configuration: " + e.getMessage());
+      logger.error("Error loading configuration: " + e.getMessage(), e);
       yamlConfig = new YAMLConfiguration();
     }
   }

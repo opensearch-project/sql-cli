@@ -20,10 +20,11 @@ from ..config.config import config_manager
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # sql-cli/
 PROJECT_ROOT = os.path.normpath(os.path.join(current_dir, "../../../../../"))
-# Java directory: sql-cli/src/main/java
 JAVA_DIR = os.path.join(PROJECT_ROOT, "src", "main", "java")
-# AWS directory: sql-cli/src/main/java/client/http5/aws
 AWS_DIR = os.path.join(JAVA_DIR, "client", "http5", "aws")
+LOGBACK_CONFIG = os.path.abspath(
+    os.path.join(PROJECT_ROOT, "src", "main", "resources", "logback.xml")
+)
 
 
 class SqlLibraryManager:
@@ -126,18 +127,27 @@ class SqlLibraryManager:
 
             # Create file handler
             file_handler = logging.FileHandler(log_file, mode="a")
-            file_handler.setFormatter(logging.Formatter("%(message)s"))
+            file_handler.setFormatter(
+                logging.Formatter("%(asctime)s %(message)s", datefmt="%H:%M:%S")
+            )
             self.logger.addHandler(file_handler)
 
             # Log startup information
             self.logger.info("=" * 80)
-            self.logger.info(
-                f"Initializing SQL Library at {time.strftime('%Y-%m-%d %H:%M:%S')}"
-            )
+            self.logger.info(f"Initializing SQL Library on {time.strftime('%Y-%m-%d')}")
 
             jar_path = sql_version.get_jar_path()
 
-            cmd = ["java", "-jar", jar_path, "Gateway"]
+            # Add logback configuration
+            self.logger.info(f"Using logback config: {LOGBACK_CONFIG}")
+
+            cmd = [
+                "java",
+                "-Dlogback.configurationFile=" + LOGBACK_CONFIG,
+                "-jar",
+                jar_path,
+                "Gateway",
+            ]
             self.logger.info(f"Using JAR file: {jar_path}")
 
             self.logger.info(f"Command: {' '.join(cmd)}")
@@ -214,8 +224,6 @@ class SqlLibraryManager:
             self.thread_running = False
 
             if hasattr(self, "process") and self.process:
-                self.logger.info("Terminating Gateway server process")
-
                 if sys.platform.startswith("win"):
                     subprocess.run(
                         ["taskkill", "/F", "/T", "/PID", str(self.process.pid)]
@@ -252,7 +260,6 @@ class SqlLibraryManager:
 
             if hasattr(self, "logger"):
                 self.logger.info("SQL Library resources cleaned up")
-                self.logger.info("=" * 80)
             return True
 
         except Exception as e:

@@ -55,9 +55,7 @@ class ExecuteQuery:
 
         # Errors handling
         # print_function(f"Before format: \n" + escape(result) + "\n")
-        if result.startswith("Invalid query") or result.startswith(
-            "Query execution fails because "
-        ):
+        if "Exception" in result:
             if "index_not_found_exception" in result:
                 print_function("[bold red]Index does not exist[/bold red]")
             elif "SyntaxCheckException" in result:

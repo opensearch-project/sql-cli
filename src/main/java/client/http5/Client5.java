@@ -27,6 +27,8 @@ import org.opensearch.client.RestClient;
 import org.opensearch.client.RestClientBuilder;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.sql.opensearch.client.OpenSearchClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -39,6 +41,7 @@ import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
  * for OpenSearch SQL plug-in version 3
  */
 public class Client5 {
+  private static final Logger logger = LoggerFactory.getLogger("Client5");
 
   public static OpenSearchClient createAwsClient(String awsEndpoint) {
     try {
@@ -46,23 +49,23 @@ public class Client5 {
       String serviceName;
       if (awsEndpoint.contains("aos")) {
         serviceName = "aoss"; // Amazon OpenSearch Serverless
-        System.out.println("Using service name 'aoss' for OpenSearch Serverless");
+        logger.info("Using service name 'aoss' for OpenSearch Serverless");
       } else if (awsEndpoint.contains("es")) {
         serviceName = "es"; // Amazon OpenSearch Service
-        System.out.println("Using service name 'es' for OpenSearch Service");
+        logger.info("Using service name 'es' for OpenSearch Service");
       } else {
-        System.err.println("ERROR - Cannot determine service type");
-        throw new RuntimeException("ERROR - Cannot determine service type");
+        logger.error("Cannot determine service type");
+        throw new RuntimeException("Cannot determine service type");
       }
 
       // Create the DefaultCredentialsProvider that will read from ~/.aws/credentials
       AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.builder().build();
       AwsCredentials credentials = credentialsProvider.resolveCredentials();
-      System.out.println("Access Key ID: " + credentials.accessKeyId());
+      logger.info("Access Key ID: " + credentials.accessKeyId());
 
       // read from ~/.aws/config
       Region region = new DefaultAwsRegionProviderChain().getRegion();
-      System.out.println("Using AWS region: " + region);
+      logger.info("Using AWS region: " + region);
 
       HttpHost host = new HttpHost("https", awsEndpoint, 443);
 
@@ -201,7 +204,7 @@ public class Client5 {
         try {
           // Get the original URI
           String originalUri = request.getRequestUri();
-          System.out.println("Original URI: " + originalUri);
+          logger.info("Original URI: " + originalUri);
 
           // Check if this is the exact URI
           String wrongShowUri =
@@ -209,11 +212,10 @@ public class Client5 {
           if (originalUri.equals(wrongShowUri)) {
             // Replace URI to just /*?
             request.setPath("/*?");
-            System.out.println("Modified Show URI: " + request.getRequestUri());
+            logger.info("Modified Show URI: " + request.getRequestUri());
           }
         } catch (Exception e) {
-          System.err.println("Error modifying URI: " + e.getMessage());
-          e.printStackTrace();
+          logger.error("Error modifying URI: " + e.getMessage());
         }
       }
     };
@@ -224,23 +226,16 @@ public class Client5 {
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, EntityDetails entityDetails, HttpContext context) {
-        System.out.println("===== " + protocol + " REQUEST =====");
-        System.out.println("Method: " + request.getMethod());
-        System.out.println("URI: " + request.getRequestUri());
-        System.out.println("Request Type: " + request.getClass().getSimpleName());
+        logger.info("===== " + protocol + " REQUEST =====");
+        logger.info("Method: " + request.getMethod());
+        logger.info("URI: " + request.getRequestUri());
+        logger.info("Request Type: " + request.getClass().getSimpleName());
 
         // Log headers
-        System.out.println("Headers:");
+        logger.info("Headers:");
         request
             .headerIterator()
-            .forEachRemaining(
-                header -> System.out.println("  " + header.getName() + ": " + header.getValue()));
-
-        if (entityDetails != null) {
-          System.out.println("Content Type: " + entityDetails.getContentType());
-          System.out.println("Content Length: " + entityDetails.getContentLength());
-        }
-        System.out.println("=====================");
+            .forEachRemaining(header -> logger.info(header.getName() + ": " + header.getValue()));
       }
     };
   }

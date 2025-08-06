@@ -35,6 +35,8 @@ import org.apache.hc.core5.http.io.entity.BufferedHttpEntity;
 import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.hc.core5.http.message.BasicHttpRequest;
 import org.apache.hc.core5.http.protocol.HttpContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpFullRequest;
 import software.amazon.awssdk.http.SdkHttpMethod;
@@ -50,6 +52,8 @@ import software.amazon.awssdk.regions.Region;
  * region using an AWS {@link HttpSigner} and {@link AwsCredentialsProvider}.
  */
 public final class AwsRequestSigningApacheV5Interceptor implements HttpRequestInterceptor {
+  private static final Logger logger =
+      LoggerFactory.getLogger("AwsRequestSigningApacheV5Interceptor");
   private final RequestSigner signer;
 
   /**
@@ -79,9 +83,6 @@ public final class AwsRequestSigningApacheV5Interceptor implements HttpRequestIn
             .method(SdkHttpMethod.fromValue(request.getMethod()))
             .uri(buildUri(request));
 
-    // Print the request type
-    System.out.println("AwsRequestSigningApacheV5Interceptor.process()");
-
     if (request instanceof ClassicHttpRequest) {
       ClassicHttpRequest classicHttpRequest = (ClassicHttpRequest) request;
 
@@ -102,7 +103,6 @@ public final class AwsRequestSigningApacheV5Interceptor implements HttpRequestIn
       }
       // RestClient is always BasicHttpRequest?
     } else if (request instanceof BasicHttpRequest) {
-      System.out.println("BasicHttpRequest");
       // If it's POST/DELETE request, then manually adding body content to the body
       // Because BasicHttpRequest does not have its body content attach to it
       // Only its metadata
@@ -115,18 +115,17 @@ public final class AwsRequestSigningApacheV5Interceptor implements HttpRequestIn
           try (BufferedReader reader = Files.newBufferedReader(path)) {
             bodyContent = reader.lines().collect(Collectors.joining("\n"));
           } catch (IOException e) {
-            System.err.println("Failed to read: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Failed to read: " + e.getMessage());
           }
         } else {
-          System.out.println("File does not exist at: " + path.toAbsolutePath());
+          logger.warn("File does not exist at: " + path.toAbsolutePath());
         }
 
         // Only proceed if bodyContent is not empty
         if (!bodyContent.isEmpty()) {
           byte[] bodyBytes = bodyContent.getBytes(StandardCharsets.UTF_8);
-          System.out.println("Byte added: " + bodyBytes.length);
-          System.out.println("Body content signing: " + bodyContent);
+          logger.info("Byte added: " + bodyBytes.length);
+          logger.info("Body content signing: " + bodyContent);
           requestBuilder.contentStreamProvider(() -> new ByteArrayInputStream(bodyBytes));
         }
       }

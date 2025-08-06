@@ -24,6 +24,8 @@ import org.opensearch.client.RestClientBuilder;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.sql.opensearch.client.OpenSearchClient;
 import org.opensearch.sql.opensearch.client.OpenSearchRestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -36,6 +38,7 @@ import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
  * for OpenSearch SQL plug-in version 2
  */
 public class Client4 {
+  private static final Logger logger = LoggerFactory.getLogger("Client4");
 
   public static OpenSearchClient createAwsClient(String awsEndpoint) {
     try {
@@ -43,23 +46,23 @@ public class Client4 {
       String serviceName;
       if (awsEndpoint.contains("aos")) {
         serviceName = "aoss"; // Amazon OpenSearch Serverless
-        System.out.println("Using service name 'aoss' for OpenSearch Serverless");
+        logger.info("Using service name 'aoss' for OpenSearch Serverless");
       } else if (awsEndpoint.contains("es")) {
         serviceName = "es"; // Amazon OpenSearch Service
-        System.out.println("Using service name 'es' for OpenSearch Service");
+        logger.info("Using service name 'es' for OpenSearch Service");
       } else {
-        System.err.println("ERROR - Cannot determine service type");
-        throw new RuntimeException("ERROR - Cannot determine service type");
+        logger.error("Cannot determine service type");
+        throw new RuntimeException("Cannot determine service type");
       }
 
       // Create the DefaultCredentialsProvider that will read from ~/.aws/credentials
       AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.builder().build();
       AwsCredentials credentials = credentialsProvider.resolveCredentials();
-      System.out.println("Access Key ID: " + credentials.accessKeyId());
+      logger.info("Access Key ID: {}", credentials.accessKeyId());
 
       // read from ~/.aws/config
       Region region = new DefaultAwsRegionProviderChain().getRegion();
-      System.out.println("Using AWS region: " + region);
+      logger.info("Using AWS region: {}", region);
 
       HttpHost host = new HttpHost(awsEndpoint, 443, "https");
 
@@ -158,25 +161,24 @@ public class Client4 {
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, HttpContext context) {
-        System.out.println("===== " + protocol + " REQUEST =====");
-        System.out.println("Method: " + request.getRequestLine().getMethod());
-        System.out.println("URI: " + request.getRequestLine().getUri());
-        System.out.println("Request Type: " + request.getClass().getSimpleName());
+        logger.info("===== {} REQUEST =====", protocol);
+        logger.info("Method: {}", request.getRequestLine().getMethod());
+        logger.info("URI: {}", request.getRequestLine().getUri());
+        logger.info("Request Type: {}", request.getClass().getSimpleName());
 
         // Log headers
-        System.out.println("Headers:");
+        logger.info("Headers:");
         for (Header header : request.getAllHeaders()) {
-          System.out.println("  " + header.getName() + ": " + header.getValue());
+          logger.info("{}: {}", header.getName(), header.getValue());
         }
 
         if (request instanceof HttpEntityEnclosingRequest) {
           HttpEntityEnclosingRequest entityRequest = (HttpEntityEnclosingRequest) request;
           if (entityRequest.getEntity() != null) {
-            System.out.println("Content Type: " + entityRequest.getEntity().getContentType());
-            System.out.println("Content Length: " + entityRequest.getEntity().getContentLength());
+            logger.info("Content Type: {}", entityRequest.getEntity().getContentType());
+            logger.info("Content Length: {}", entityRequest.getEntity().getContentLength());
           }
         }
-        System.out.println("=====================");
       }
     };
   }

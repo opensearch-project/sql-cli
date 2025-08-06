@@ -1,0 +1,12 @@
+<configuration>
+  <!-- Output to console, sql_library_manager.py will capture and append them to sql_library.log-->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>[%level][%logger{36}.%M] %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE" />
+  </root>
+</configuration>

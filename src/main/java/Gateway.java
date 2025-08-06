@@ -7,22 +7,21 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.opensearch.sql.ppl.PPLService;
 import org.opensearch.sql.sql.SQLService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
 import query.QueryExecution;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 
 public class Gateway {
+  private static final Logger logger = LoggerFactory.getLogger("Gateway");
 
   private PPLService pplService;
   private SQLService sqlService;
   private QueryExecution queryExecution;
 
-  public Gateway() {
-    // Empty constructor - services will be initialized when OpenSearch CLI connects
-  }
-
-  public synchronized boolean initializeAwsConnection(String hostPort, boolean useHttp5) {
+  public boolean initializeAwsConnection(String hostPort, boolean useHttp5) {
     // hostPort is the AWS OpenSearch endpoint (without https://)
     Region region = new DefaultAwsRegionProviderChain().getRegion();
 
@@ -35,19 +34,18 @@ public class Gateway {
       this.sqlService = injector.getInstance(SQLService.class);
       this.queryExecution = injector.getInstance(QueryExecution.class);
 
-      System.out.println(
-          "Initialized AWS connection to OpenSearch at " + hostPort + " in region " + region + ".");
-      System.out.println("Using HTTP" + (useHttp5 ? "5" : "4") + " for the connection.");
+      logger.info("Initialized AWS connection to OpenSearch at {} in region {}.", hostPort, region);
+      logger.info("Using HTTP{} for the connection.", (useHttp5 ? "5" : "4"));
 
       return true;
 
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Failed to initialize AWS connection", e);
       return false;
     }
   }
 
-  public synchronized boolean initializeConnection(
+  public boolean initializeConnection(
       String host,
       int port,
       String protocol,
@@ -67,14 +65,13 @@ public class Gateway {
       this.sqlService = injector.getInstance(SQLService.class);
       this.queryExecution = injector.getInstance(QueryExecution.class);
 
-      System.out.println(
-          "Initialized connection to OpenSearch at " + protocol + "://" + host + ":" + port + ".");
-      System.out.println("Using HTTP" + (useHttp5 ? "5" : "4") + " for the connection.");
+      logger.info("Initialized connection to OpenSearch at {}://{}:{}.", protocol, host, port);
+      logger.info("Using HTTP{} for the connection.", (useHttp5 ? "5" : "4"));
 
       return true;
 
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Failed to initialize connection", e);
       return false;
     }
   }
@@ -86,8 +83,6 @@ public class Gateway {
 
   public static void main(String[] args) {
     try {
-      System.out.println("Starting Gateway Server...");
-
       Gateway app = new Gateway();
 
       // default port 25333
@@ -95,9 +90,10 @@ public class Gateway {
       GatewayServer server = new GatewayServer(app, gatewayPort);
 
       server.start();
-      System.out.println("Gateway Server Started on port " + gatewayPort);
+      logger.info("Gateway Server Started on port {}", gatewayPort);
+
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Failed to start Gateway Server", e);
     }
   }
 }
