@@ -195,13 +195,11 @@ class SqlConnection:
                 )
 
             # Check for successful initialization
-            if result:
-                self.opensearch_connected = True
-                return True
-            else:
-                self.error_message = "Failed to initialize SQL library"
-                self.opensearch_connected = False
-                return False
+            self.opensearch_connected = result
+            self.error_message = (
+                "Failed to initialize SQL library" if not result else None
+            )
+            return result
 
         except Exception as e:
             self.error_message = f"Unable to initialize SQL library: {str(e)}"

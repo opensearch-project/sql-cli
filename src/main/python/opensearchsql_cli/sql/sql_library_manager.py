@@ -93,24 +93,14 @@ class SqlLibraryManager:
                 )
             return False
 
-    def start(self):
+    def _setup_logging(self):
         """
-        Initialize the SQL Library
+        Set up logging for the SQL Library
 
         Returns:
-            bool: True if initialization successful, False otherwise
+            bool: True if setup successful, False otherwise
         """
-        if self.started:
-            return True
-
-        self.process = None
-
         try:
-            # Always attempt to kill any process using the port
-            if self._check_port_in_use():
-                if not self._kill_process_on_port():
-                    return False
-
             # Get log file path from config or use default
             config_log_file = config_manager.get("File", "sql_log", "")
             if config_log_file and config_log_file.strip():
@@ -136,6 +126,70 @@ class SqlLibraryManager:
             self.logger.info("=" * 80)
             self.logger.info(f"Initializing SQL Library on {time.strftime('%Y-%m-%d')}")
 
+            return True
+        except Exception as e:
+            print(f"Error setting up logging: {e}")
+            return False
+
+    def _wait_for_server_start(self):
+        """
+        Wait for the server to start
+
+        Returns:
+            bool: True if server started, False if timeout
+        """
+        for _ in range(30):
+            line = self.process.stdout.readline()
+            self.logger.info(line.strip())
+            if "Gateway Server Started" in line:
+                return True
+
+        self.logger.error("Failed to start Gateway server within timeout")
+        return False
+
+    def _start_output_thread(self):
+        """
+        Start a thread to monitor process output
+        """
+        self.thread_running = True
+
+        def read_output():
+            try:
+                while (
+                    self.thread_running and self.process and self.process.poll() is None
+                ):
+                    line = self.process.stdout.readline()
+                    if line:
+                        self.logger.info(line.strip())
+            except Exception as e:
+                if hasattr(self, "logger"):
+                    self.logger.error(f"Error in output thread: {e}")
+
+        self.output_thread = threading.Thread(target=read_output, daemon=True)
+        self.output_thread.start()
+
+    def start(self):
+        """
+        Initialize the SQL Library
+
+        Returns:
+            bool: True if initialization successful, False otherwise
+        """
+        if self.started:
+            return True
+
+        self.process = None
+
+        try:
+            # Always attempt to kill any process using the port
+            if self._check_port_in_use():
+                if not self._kill_process_on_port():
+                    return False
+
+            # Set up logging
+            if not self._setup_logging():
+                return False
+
             jar_path = sql_version.get_jar_path()
 
             # Add logback configuration
@@ -143,13 +197,12 @@ class SqlLibraryManager:
 
             cmd = [
                 "java",
-                "-Dlogback.configurationFile=" + LOGBACK_CONFIG,
+                "-Dlogback.configurationFile=" + str(LOGBACK_CONFIG),
                 "-jar",
                 jar_path,
                 "Gateway",
             ]
             self.logger.info(f"Using JAR file: {jar_path}")
-
             self.logger.info(f"Command: {' '.join(cmd)}")
 
             # Start the process
@@ -164,43 +217,15 @@ class SqlLibraryManager:
             )
 
             # Wait for the server to start
-            started = False
-            for _ in range(30):
-                line = self.process.stdout.readline()
-                self.logger.info(line.strip())
-                if "Gateway Server Started" in line:
-                    started = True
-                    break
-
-            if not started:
-                error_msg = "Failed to start Gateway server within timeout"
-                self.logger.error(error_msg)
+            if not self._wait_for_server_start():
                 self.stop()
                 return False
 
-            # Start a thread to read and log output from the Java process
-            self.thread_running = True
-
-            def read_output():
-                try:
-                    while (
-                        self.thread_running
-                        and self.process
-                        and self.process.poll() is None
-                    ):
-                        line = self.process.stdout.readline()
-                        if line:
-                            self.logger.info(line.strip())
-                except Exception as e:
-                    if hasattr(self, "logger"):
-                        self.logger.error(f"Error in output thread: {e}")
-
-            self.output_thread = threading.Thread(target=read_output, daemon=True)
-            self.output_thread.start()
+            # Start output monitoring thread
+            self._start_output_thread()
 
             self.started = True
             self.logger.info("SQL Library initialized successfully")
-
             return True
 
         except Exception as e:
@@ -223,7 +248,7 @@ class SqlLibraryManager:
             # Signal the output thread to stop
             self.thread_running = False
 
-            if hasattr(self, "process") and self.process:
+            if self.process:
                 if sys.platform.startswith("win"):
                     subprocess.run(
                         ["taskkill", "/F", "/T", "/PID", str(self.process.pid)]
@@ -240,11 +265,7 @@ class SqlLibraryManager:
                 self.process = None
 
             # Wait for the output thread to finish
-            if (
-                hasattr(self, "output_thread")
-                and self.output_thread
-                and self.output_thread.is_alive()
-            ):
+            if self.output_thread and self.output_thread.is_alive():
                 try:
                     self.output_thread.join(timeout=1)
                 except Exception:
@@ -256,14 +277,15 @@ class SqlLibraryManager:
             aws_body_path = os.path.join(AWS_DIR, "aws_body.json")
             if os.path.exists(aws_body_path):
                 os.remove(aws_body_path)
-                self.logger.info("Delete " + aws_body_path)
+                if self.logger:
+                    self.logger.info("Delete " + aws_body_path)
 
-            if hasattr(self, "logger"):
+            if self.logger:
                 self.logger.info("SQL Library resources cleaned up")
             return True
 
         except Exception as e:
-            if hasattr(self, "logger"):
+            if self.logger:
                 self.logger.error(f"Error stopping SQL Library: {e}")
             return False
 
