@@ -76,9 +76,9 @@ public class Gateway {
     }
   }
 
-  public String queryExecution(String query, boolean isPPL, String format) {
+  public String queryExecution(String query, boolean isPPL, boolean isExplain, String format) {
     // Use the QueryExecution class to execute the query
-    return queryExecution.execute(query, isPPL, format);
+    return queryExecution.execute(query, isPPL, isExplain, format);
   }
 
   public static void main(String[] args) {

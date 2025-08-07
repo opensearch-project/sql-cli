@@ -51,7 +51,7 @@ class ExecuteQuery:
 
         # Execute the query
         with console.status("Executing the query...", spinner="dots"):
-            result = connection.query_executor(query, is_ppl_mode, format)
+            result = connection.query_executor(query, is_ppl_mode, is_explain, format)
 
         # Errors handling
         # print_function(f"Before format: \n" + escape(result) + "\n")

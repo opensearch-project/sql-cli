@@ -37,7 +37,7 @@ import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
  * Client class for creating OpenSearch clients with different authentication methods using HTTP4
  * for OpenSearch SQL plug-in version 2
  */
-public class Client4 {
+public class Http4Client {
   private static final Logger logger = LoggerFactory.getLogger("Client4");
 
   public static OpenSearchClient createAwsClient(String awsEndpoint) {

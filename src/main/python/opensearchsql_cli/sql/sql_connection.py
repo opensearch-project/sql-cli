@@ -233,13 +233,14 @@ class SqlConnection:
             self.sql_connected = False
             return False
 
-    def query_executor(self, query: str, is_ppl: bool = True, format: str = "json"):
+    def query_executor(self, query, is_ppl=True, is_explain=False, format="json"):
         """
         Execute a query through the SQL Library service
 
         Args:
             query: The SQL or PPL query string
             is_ppl: True if the query is PPL, False if SQL (default: True)
+            is_explain: True if query is explain (default: False)
             format: Output format (json, table, csv) (default: json)
 
         Returns:
@@ -259,7 +260,7 @@ class SqlConnection:
 
         query_service = self.sql_lib.entry_point
         # queryExecution inside of Gateway.java
-        result = query_service.queryExecution(query, is_ppl, format)
+        result = query_service.queryExecution(query, is_ppl, is_explain, format)
         return result
 
 

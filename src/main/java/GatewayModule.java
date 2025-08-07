@@ -103,7 +103,7 @@ public class GatewayModule extends AbstractModule {
   public OpenSearchClient openSearchClient() {
     try {
       // Determine which client class to use based on useHttp5 flag
-      String clientClassName = useHttp5 ? "client.http5.Client5" : "client.http4.Client4";
+      String clientClassName = useHttp5 ? "client.http5.Http5Client" : "client.http4.Http4Client";
       Class<?> clientClass = Class.forName(clientClassName);
 
       if (useAwsAuth) {
