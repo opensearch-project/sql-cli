@@ -100,10 +100,10 @@ class TestQuery:
 
         # Verify the connection was called with the correct parameters
         mock_connection.query_executor.assert_called_once_with(
-            query, is_ppl_mode, format
+            query, is_ppl_mode, is_explain, format
         )
         print(
-            f"Query Executor Called: query={query}, is_ppl_mode={is_ppl_mode}, format={format}"
+            f"Query Executor Called: query={query}, is_ppl_mode={is_ppl_mode}, is_explain={is_explain}, format={format}"
         )
 
         # Verify the print function was called with the expected arguments

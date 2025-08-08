@@ -6,7 +6,6 @@
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -102,29 +101,22 @@ public class GatewayModule extends AbstractModule {
   @Provides
   public OpenSearchClient openSearchClient() {
     try {
-      // Determine which client class to use based on useHttp5 flag
-      String clientClassName = useHttp5 ? "client.http5.Http5Client" : "client.http4.Http4Client";
-      Class<?> clientClass = Class.forName(clientClassName);
+      // Use the ClientBuilder to create the appropriate client
+      client.ClientBuilder builder = new client.ClientBuilder().withHttp5(useHttp5);
 
       if (useAwsAuth) {
-        // Call createAwsClient(awsEndpoint)
-        Method method = clientClass.getMethod("createAwsClient", String.class);
-        return (OpenSearchClient) method.invoke(null, awsEndpoint);
-      } else if (protocol != null && protocol.equalsIgnoreCase("https")) {
-        // Call createHttpsClient(host, port, username, password, ignoreSSL)
-        Method method =
-            clientClass.getMethod(
-                "createHttpsClient",
-                String.class,
-                int.class,
-                String.class,
-                String.class,
-                boolean.class);
-        return (OpenSearchClient) method.invoke(null, host, port, username, password, ignoreSSL);
+        // Configure AWS authentication
+        return builder.withAwsAuth(awsEndpoint).build();
       } else {
-        // Call createHttpClient(host, port)
-        Method method = clientClass.getMethod("createHttpClient", String.class, int.class);
-        return (OpenSearchClient) method.invoke(null, host, port);
+        // Configure standard authentication
+        return builder
+            .withHost(host)
+            .withPort(port)
+            .withProtocol(protocol)
+            .withUsername(username)
+            .withPassword(password)
+            .withIgnoreSSL(ignoreSSL)
+            .build();
       }
     } catch (Exception e) {
       throw new RuntimeException("Failed to create OpenSearchClient: " + e.getMessage(), e);

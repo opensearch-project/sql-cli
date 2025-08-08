@@ -10,6 +10,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
@@ -41,55 +42,39 @@ import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
  * for OpenSearch SQL plug-in version 3
  */
 public class Http5Client {
-  private static final Logger logger = LoggerFactory.getLogger("Client5");
+  private static final Logger logger = LoggerFactory.getLogger("Http5Client");
 
+  private static final String SERVERLESS = "aos";
+  private static final String SERVICE = "es";
+  private static final String SERVERLESS_NAME = "aoss";
+  private static final String SERVICE_NAME = "es";
+
+  private static final String PROBLEMATIC_SHOW_URI =
+      "/?ignore_throttled=false&ignore_unavailable=false&expand_wildcards=open%2Cclosed&allow_no_indices=false&cluster_manager_timeout=30s";
+  private static final String CORRECTED_SHOW_URI = "/*?";
+
+  /**
+   * Creates an OpenSearch client with AWS authentication (SigV4).
+   *
+   * @param awsEndpoint The AWS OpenSearch endpoint URL
+   * @return Configured OpenSearchClient with AWS authentication
+   * @throws RuntimeException if client creation fails
+   */
   public static OpenSearchClient createAwsClient(String awsEndpoint) {
     try {
-      // Determine the service name based on the endpoint URL
-      String serviceName;
-      if (awsEndpoint.contains("aos")) {
-        serviceName = "aoss"; // Amazon OpenSearch Serverless
-        logger.info("Using service name 'aoss' for OpenSearch Serverless");
-      } else if (awsEndpoint.contains("es")) {
-        serviceName = "es"; // Amazon OpenSearch Service
-        logger.info("Using service name 'es' for OpenSearch Service");
-      } else {
-        logger.error("Cannot determine service type");
-        throw new RuntimeException("Cannot determine service type");
-      }
-
-      // Create the DefaultCredentialsProvider that will read from ~/.aws/credentials
-      AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.builder().build();
-      AwsCredentials credentials = credentialsProvider.resolveCredentials();
-      logger.info("Access Key ID: " + credentials.accessKeyId());
-
-      // read from ~/.aws/config
-      Region region = new DefaultAwsRegionProviderChain().getRegion();
-      logger.info("Using AWS region: " + region);
+      String serviceName = determineServiceName(awsEndpoint);
+      AwsCredentialsProvider credentialsProvider = createAwsCredentialsProvider();
+      Region region = getAwsRegion();
 
       HttpHost host = new HttpHost("https", awsEndpoint, 443);
+      HttpRequestInterceptor awsInterceptor =
+          createAwsSigningInterceptor(serviceName, credentialsProvider, region);
 
-      // Create the AWS SigV4 interceptor
-      HttpRequestInterceptor interceptor =
-          new AwsRequestSigningApacheV5Interceptor(
-              serviceName, AwsV4HttpSigner.create(), credentialsProvider, region);
-
-      // Add URI modification and logging interceptors
-      HttpRequestInterceptor newShowURI = createNewShowURI();
-      HttpRequestInterceptor loggingInterceptor = createLoggingInterceptor(true);
-
-      // Create RestClientBuilder with configurations
       RestClientBuilder restClientBuilder =
           RestClient.builder(host)
               .setHttpClientConfigCallback(
-                  httpClientBuilder -> {
-                    return httpClientBuilder
-                        .addRequestInterceptorFirst(newShowURI)
-                        .addRequestInterceptorLast(interceptor)
-                        .addRequestInterceptorLast(loggingInterceptor);
-                  });
+                  httpClientBuilder -> configureAwsHttpClient(httpClientBuilder, awsInterceptor));
 
-      // Create RestHighLevelClient
       RestHighLevelClient restHighLevelClient = new RestHighLevelClient(restClientBuilder);
       return new OpenSearchRestClientImpl(restHighLevelClient);
     } catch (Exception e) {
@@ -97,145 +82,197 @@ public class Http5Client {
     }
   }
 
-  public static OpenSearchClient createHttpsClient(
-      String host, int port, String username, String password, boolean ignoreSSL) {
+  /**
+   * Creates an OpenSearch client with HTTP or HTTPS and optional basic authentication.
+   *
+   * @param host The hostname
+   * @param port The port number
+   * @param protocol The protocol ("http" or "https")
+   * @param username The username for basic auth (can be null)
+   * @param password The password for basic auth (can be null)
+   * @param ignoreSSL Whether to ignore SSL certificate validation (only applies to HTTPS)
+   * @return Configured OpenSearchClient
+   * @throws RuntimeException if client creation fails
+   */
+  public static OpenSearchClient createClient(
+      String host, int port, String protocol, String username, String password, boolean ignoreSSL) {
     try {
-      final HttpHost httpHost = new HttpHost("https", host, port);
+      boolean useHttps = "https".equalsIgnoreCase(protocol);
+      HttpHost httpHost = new HttpHost(useHttps ? "https" : "http", host, port);
 
-      // Set up credentials
-      final BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-      if (username != null && password != null) {
-        credentialsProvider.setCredentials(
-            new AuthScope(httpHost),
-            new UsernamePasswordCredentials(username, password.toCharArray()));
+      RestClientBuilder restClientBuilder = RestClient.builder(httpHost);
+
+      if (useHttps) {
+        // HTTPS configuration
+        BasicCredentialsProvider credentialsProvider =
+            createBasicCredentialsProvider(httpHost, username, password);
+        SSLContext sslContext = createSSLContext(ignoreSSL);
+        PoolingAsyncClientConnectionManager connectionManager = createConnectionManager(sslContext);
+
+        restClientBuilder.setHttpClientConfigCallback(
+            httpClientBuilder ->
+                configureHttpsClient(httpClientBuilder, credentialsProvider, connectionManager));
+      } else {
+        // HTTP configuration
+        restClientBuilder.setHttpClientConfigCallback(
+            httpClientBuilder -> configureHttpClient(httpClientBuilder));
       }
 
-      // Set up SSL context
-      final SSLContext sslContext =
-          SSLContextBuilder.create()
-              // Trust certificates based on ignoreSSL flag
-              .loadTrustMaterial(null, (chains, authType) -> ignoreSSL)
-              .build();
-
-      // Create interceptors
-      HttpRequestInterceptor newShowURI = createNewShowURI();
-      HttpRequestInterceptor loggingInterceptor = createLoggingInterceptor(true);
-
-      // Create a factory for TLS details
-      Factory<SSLEngine, TlsDetails> tlsDetailsFactory =
-          new Factory<SSLEngine, TlsDetails>() {
-            @Override
-            public TlsDetails create(final SSLEngine sslEngine) {
-              return new TlsDetails(sslEngine.getSession(), sslEngine.getApplicationProtocol());
-            }
-          };
-
-      // Build the TLS strategy using SSL context and factory
-      final TlsStrategy tlsStrategy =
-          ClientTlsStrategyBuilder.create()
-              .setSslContext(sslContext)
-              .setTlsDetailsFactory(tlsDetailsFactory)
-              .build();
-
-      // Create a connection manager with TLS strategy
-      final PoolingAsyncClientConnectionManager connectionManager =
-          PoolingAsyncClientConnectionManagerBuilder.create().setTlsStrategy(tlsStrategy).build();
-
-      // Create RestClientBuilder with configurations
-      RestClientBuilder restClientBuilder =
-          RestClient.builder(httpHost)
-              .setHttpClientConfigCallback(
-                  httpClientBuilder -> {
-                    return httpClientBuilder
-                        .setDefaultCredentialsProvider(credentialsProvider)
-                        .setConnectionManager(connectionManager)
-                        .addRequestInterceptorFirst(newShowURI)
-                        .addRequestInterceptorLast(loggingInterceptor);
-                  });
-
-      // Create RestHighLevelClient
-      final RestHighLevelClient restHighLevelClient = new RestHighLevelClient(restClientBuilder);
-
-      return new OpenSearchRestClientImpl(restHighLevelClient);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to create HTTPS OpenSearchClient", e);
-    }
-  }
-
-  public static OpenSearchClient createHttpClient(String host, int port) {
-    try {
-      final HttpHost httpHost = new HttpHost("http", host, port);
-
-      // Create interceptors
-      HttpRequestInterceptor newShowURI = createNewShowURI();
-      HttpRequestInterceptor loggingInterceptor = createLoggingInterceptor(false);
-
-      // Create RestClientBuilder with configurations
-      RestClientBuilder restClientBuilder =
-          RestClient.builder(httpHost)
-              .setHttpClientConfigCallback(
-                  httpClientBuilder -> {
-                    return httpClientBuilder
-                        .addRequestInterceptorFirst(newShowURI)
-                        .addRequestInterceptorLast(loggingInterceptor);
-                  });
-
-      // Create RestHighLevelClient
       RestHighLevelClient restHighLevelClient = new RestHighLevelClient(restClientBuilder);
-
       return new OpenSearchRestClientImpl(restHighLevelClient);
     } catch (Exception e) {
-      throw new RuntimeException("Failed to create HTTP OpenSearchClient", e);
+      throw new RuntimeException("Failed to create OpenSearchClient", e);
     }
   }
+
+  /** Determines the AWS service name based on the endpoint URL. */
+  private static String determineServiceName(String awsEndpoint) {
+    if (awsEndpoint.contains(SERVERLESS)) {
+      logger.info("Using service name '{}' for OpenSearch Serverless", SERVERLESS_NAME);
+      return SERVERLESS_NAME;
+    } else if (awsEndpoint.contains(SERVICE)) {
+      logger.info("Using service name '{}' for OpenSearch Service", SERVICE_NAME);
+      return SERVICE_NAME;
+    } else {
+      logger.error("Cannot determine service type from endpoint: {}", awsEndpoint);
+      throw new RuntimeException("Cannot determine service type");
+    }
+  }
+
+  /** Creates AWS credentials provider and logs access key ID. */
+  private static AwsCredentialsProvider createAwsCredentialsProvider() {
+    AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.builder().build();
+    AwsCredentials credentials = credentialsProvider.resolveCredentials();
+    logger.info("Access Key ID: {}", credentials.accessKeyId());
+    return credentialsProvider;
+  }
+
+  /** Gets AWS region from default provider chain. */
+  private static Region getAwsRegion() {
+    Region region = new DefaultAwsRegionProviderChain().getRegion();
+    logger.info("Using AWS region: {}", region);
+    return region;
+  }
+
+  /** Creates AWS signing interceptor. */
+  private static HttpRequestInterceptor createAwsSigningInterceptor(
+      String serviceName, AwsCredentialsProvider credentialsProvider, Region region) {
+    return new AwsRequestSigningApacheV5Interceptor(
+        serviceName, AwsV4HttpSigner.create(), credentialsProvider, region);
+  }
+
+  /** Creates basic credentials provider for HTTPS authentication. */
+  private static BasicCredentialsProvider createBasicCredentialsProvider(
+      HttpHost httpHost, String username, String password) {
+    BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+    if (username != null && password != null) {
+      credentialsProvider.setCredentials(
+          new AuthScope(httpHost),
+          new UsernamePasswordCredentials(username, password.toCharArray()));
+    }
+    return credentialsProvider;
+  }
+
+  /** Creates SSL context with optional certificate validation bypass. */
+  private static SSLContext createSSLContext(boolean ignoreSSL) throws Exception {
+    return SSLContextBuilder.create()
+        .loadTrustMaterial(null, (chains, authType) -> ignoreSSL)
+        .build();
+  }
+
+  /** Creates connection manager with TLS strategy. */
+  private static PoolingAsyncClientConnectionManager createConnectionManager(
+      SSLContext sslContext) {
+    Factory<SSLEngine, TlsDetails> tlsDetailsFactory =
+        sslEngine -> new TlsDetails(sslEngine.getSession(), sslEngine.getApplicationProtocol());
+
+    TlsStrategy tlsStrategy =
+        ClientTlsStrategyBuilder.create()
+            .setSslContext(sslContext)
+            .setTlsDetailsFactory(tlsDetailsFactory)
+            .build();
+
+    return PoolingAsyncClientConnectionManagerBuilder.create().setTlsStrategy(tlsStrategy).build();
+  }
+
+
+  /** Configures HTTP client for AWS authentication. */
+  private static HttpAsyncClientBuilder configureAwsHttpClient(
+      HttpAsyncClientBuilder httpClientBuilder, HttpRequestInterceptor awsInterceptor) {
+    return httpClientBuilder
+        .addRequestInterceptorFirst(createUriModificationInterceptor())
+        .addRequestInterceptorLast(awsInterceptor)
+        .addRequestInterceptorLast(createLoggingInterceptor(true));
+  }
+
+  /** Configures HTTP client for HTTPS with basic authentication. */
+  private static HttpAsyncClientBuilder configureHttpsClient(
+      HttpAsyncClientBuilder httpClientBuilder,
+      BasicCredentialsProvider credentialsProvider,
+      PoolingAsyncClientConnectionManager connectionManager) {
+    return httpClientBuilder
+        .setDefaultCredentialsProvider(credentialsProvider)
+        .setConnectionManager(connectionManager)
+        .addRequestInterceptorFirst(createUriModificationInterceptor())
+        .addRequestInterceptorLast(createLoggingInterceptor(true));
+  }
+
+  /** Configures HTTP client for plain HTTP. */
+  private static HttpAsyncClientBuilder configureHttpClient(
+      HttpAsyncClientBuilder httpClientBuilder) {
+    return httpClientBuilder
+        .addRequestInterceptorFirst(createUriModificationInterceptor())
+        .addRequestInterceptorLast(createLoggingInterceptor(false));
+  }
+
 
   /**
-   * Creates a URI modification interceptor for SHOW command Original URI:
-   * /?ignore_throttled=false&ignore_unavailable=false&expand_wildcards=open%2Cclosed&allow_no_indices=false&cluster_manager_timeout=30s
-   * Because Error: OpenSearchStatusException[OpenSearch exception [type=illegal_argument_exception,
-   * reason=request [/] contains unrecognized parameters: [allow_no_indices],
-   * [cluster_manager_timeout], [expand_wildcards], [ignore_throttled], [ignore_unavailable]]]
-   * Modified URI:: /*?
+   * Creates a URI modification interceptor for SHOW command.
+   *
+   * <p>Fixes the issue where certain query parameters are not recognized by OpenSearch. Original
+   * problematic URI contains parameters like allow_no_indices, cluster_manager_timeout, etc. These
+   * are replaced with a simplified URI pattern.
    */
-  private static HttpRequestInterceptor createNewShowURI() {
+  private static HttpRequestInterceptor createUriModificationInterceptor() {
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, EntityDetails entityDetails, HttpContext context) {
         try {
-          // Get the original URI
           String originalUri = request.getRequestUri();
-          logger.info("Original URI: " + originalUri);
+          logger.info("Original URI: {}", originalUri);
 
-          // Check if this is the exact URI
-          String wrongShowUri =
-              "/?ignore_throttled=false&ignore_unavailable=false&expand_wildcards=open%2Cclosed&allow_no_indices=false&cluster_manager_timeout=30s";
-          if (originalUri.equals(wrongShowUri)) {
-            // Replace URI to just /*?
-            request.setPath("/*?");
-            logger.info("Modified Show URI: " + request.getRequestUri());
+          if (PROBLEMATIC_SHOW_URI.equals(originalUri)) {
+            request.setPath(CORRECTED_SHOW_URI);
+            logger.info("Modified Show URI: {}", request.getRequestUri());
           }
         } catch (Exception e) {
-          logger.error("Error modifying URI: " + e.getMessage());
+          logger.error("Error modifying URI: {}", e.getMessage());
         }
       }
     };
   }
 
+  /**
+   * Creates a logging interceptor for HTTP requests.
+   *
+   * @param isHttps Whether this is for HTTPS requests
+   * @return Configured logging interceptor
+   */
   private static HttpRequestInterceptor createLoggingInterceptor(boolean isHttps) {
     final String protocol = isHttps ? "HTTPS" : "HTTP";
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, EntityDetails entityDetails, HttpContext context) {
-        logger.info("===== " + protocol + " REQUEST =====");
-        logger.info("Method: " + request.getMethod());
-        logger.info("URI: " + request.getRequestUri());
-        logger.info("Request Type: " + request.getClass().getSimpleName());
+        logger.info("===== {} REQUEST =====", protocol);
+        logger.info("Method: {}", request.getMethod());
+        logger.info("URI: {}", request.getRequestUri());
+        logger.info("Request Type: {}", request.getClass().getSimpleName());
 
         // Log headers
         logger.info("Headers:");
         request
             .headerIterator()
-            .forEachRemaining(header -> logger.info(header.getName() + ": " + header.getValue()));
+            .forEachRemaining(header -> logger.info("{}: {}", header.getName(), header.getValue()));
       }
     };
   }
