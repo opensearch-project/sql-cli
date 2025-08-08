@@ -37,7 +37,8 @@ ext.getEffectiveVersion = { ->
         }
         return taskName.replace('_', '.')
     }
-    return project.hasProperty('version') ? project.getProperty('version') : null
+    // Use default version when no version is specified
+    return project.ext.defaultVersion
 }
 
 // Helper function to check if a task is for local JAR
@@ -83,6 +84,9 @@ ext.getHttpClientInfo = { ->
 
 
 ext {
+    // Default version to use when no specific version is specified
+    defaultVersion = "3.1.0.0"
+    
     submodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol', 'datasources']
 
     // TODO: will need to see why using datasources on Maven fails
@@ -143,6 +147,13 @@ ext {
         'io.github.acm19:aws-request-signing-apache-interceptor:3.0.0'
     ]
         
+    // OpenSearch client dependencies
+    opensearchClientDeps = [
+        'opensearch-rest-high-level-client',
+        'opensearch-rest-client',
+        'opensearch-java'
+    ]
+    
     metaInfExclusions = [
         'META-INF/*.SF',
         'META-INF/*.DSA',
@@ -265,10 +276,10 @@ spotless {
             exclude '**/build/**', '**/build-*/**', 'src/main/gen/**'
         }
         importOrder()
-        // licenseHeader("/*\n" +
-        //         " * Copyright OpenSearch Contributors\n" +
-        //         " * SPDX-License-Identifier: Apache-2.0\n" +
-        //         " */\n\n")
+        licenseHeader("/*\n" +
+                " * Copyright OpenSearch Contributors\n" +
+                " * SPDX-License-Identifier: Apache-2.0\n" +
+                " */\n\n")
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
@@ -390,14 +401,8 @@ ext.createVersionConfigurations = { String version ->
 
         // Add OpenSearch client dependencies with appropriate version
         def clientVersion = project.ext.getOpenSearchClientVersion(version)
-
-        def opensearchClientDeps = [
-            'opensearch-rest-high-level-client',
-            'opensearch-rest-client',
-            'opensearch-java'
-        ]
         
-        opensearchClientDeps.each { dep ->
+        project.ext.opensearchClientDeps.each { dep ->
             dependencies.add(configName, "org.opensearch.client:${dep}:${clientVersion}")
         }
         
@@ -442,13 +447,7 @@ ext.createLocalConfigurations = { String version, String localJarDir ->
         // Add OpenSearch client dependencies with appropriate version
         def clientVersion = project.ext.getOpenSearchClientVersion(version)
         
-        def opensearchClientDeps = [
-            'opensearch-rest-high-level-client',
-            'opensearch-rest-client',
-            'opensearch-java'
-        ]
-        
-        opensearchClientDeps.each { dep ->
+        project.ext.opensearchClientDeps.each { dep ->
             dependencies.add(configName, "org.opensearch.client:${dep}:${clientVersion}")
         }
         
@@ -508,5 +507,27 @@ tasks.addRule("Pattern: <version>: Creates a task for the specified version") { 
             
             println "Version ${version}: Set implementation configuration"
         }
+    }
+}
+
+shadowJar {
+    zip64 = true
+}
+
+// Set up default configuration when no specific version task is used
+// e.g. ./gradlew build so that IDE can recognize import classes
+afterEvaluate {
+    def effectiveVersion = project.ext.getEffectiveVersion()
+    
+    if (effectiveVersion == project.ext.defaultVersion) {
+
+        def configName = project.ext.createVersionConfigurations(effectiveVersion)
+        def httpClientInfo = project.ext.getHttpClientInfo()
+        configurations.implementation.extendsFrom = [
+            configurations.sharedDependency, 
+            httpClientInfo.dependencies, 
+            configurations[configName]
+        ] as Set
+        println "Default build: Set up version ${effectiveVersion} with ${httpClientInfo.clientName} client"
     }
 }

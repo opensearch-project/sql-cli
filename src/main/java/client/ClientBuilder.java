@@ -28,7 +28,6 @@ public class ClientBuilder {
   private String awsEndpoint;
   private boolean useHttp5;
 
-
   /**
    * Sets the host for the client.
    *
@@ -148,7 +147,8 @@ public class ClientBuilder {
                 String.class,
                 String.class,
                 boolean.class);
-        return (OpenSearchClient) method.invoke(null, host, port, protocol, username, password, ignoreSSL);
+        return (OpenSearchClient)
+            method.invoke(null, host, port, protocol, username, password, ignoreSSL);
       }
     } catch (Exception e) {
       throw new RuntimeException("Failed to create OpenSearchClient: " + e.getMessage(), e);

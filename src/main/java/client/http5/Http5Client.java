@@ -195,7 +195,6 @@ public class Http5Client {
     return PoolingAsyncClientConnectionManagerBuilder.create().setTlsStrategy(tlsStrategy).build();
   }
 
-
   /** Configures HTTP client for AWS authentication. */
   private static HttpAsyncClientBuilder configureAwsHttpClient(
       HttpAsyncClientBuilder httpClientBuilder, HttpRequestInterceptor awsInterceptor) {
@@ -224,7 +223,6 @@ public class Http5Client {
         .addRequestInterceptorFirst(createUriModificationInterceptor())
         .addRequestInterceptorLast(createLoggingInterceptor(false));
   }
-
 
   /**
    * Creates a URI modification interceptor for SHOW command.

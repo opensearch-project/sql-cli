@@ -287,16 +287,6 @@ class OpenSearchSqlCli:
                         )
                     return
 
-            # Execute single query non-interactive mode
-            if query:
-                # Initialize the interactive shell
-                self.shell.language_mode = language.lower()
-                self.shell.is_ppl_mode = language.lower() == "ppl"
-                self.shell.format = format.lower()
-                self.shell.execute_query(query)
-                print("")
-                return
-
             # print Banner
             banner = pyfiglet.figlet_format("OpenSearch", font="slant")
             print(banner)
@@ -326,6 +316,16 @@ class OpenSearchSqlCli:
             console.print(
                 f"[green]Format:[/green] [dim white]{format.upper()}[/dim white]"
             )
+
+            # Execute single query non-interactive mode
+            if query:
+                # Initialize the interactive shell
+                self.shell.language_mode = language.lower()
+                self.shell.is_ppl_mode = language.lower() == "ppl"
+                self.shell.format = format.lower()
+                self.shell.execute_query(query)
+                print("")
+                return
 
             # Start interactive shell
             self.shell.start(language, format)

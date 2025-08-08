@@ -8,7 +8,6 @@ package client.http4;
 import io.github.acm19.aws.interceptor.http.AwsRequestSigningApacheInterceptor;
 import javax.net.ssl.SSLContext;
 import org.apache.http.Header;
-import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;

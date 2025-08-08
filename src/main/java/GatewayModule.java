@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import client.ClientBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
@@ -102,7 +103,7 @@ public class GatewayModule extends AbstractModule {
   public OpenSearchClient openSearchClient() {
     try {
       // Use the ClientBuilder to create the appropriate client
-      client.ClientBuilder builder = new client.ClientBuilder().withHttp5(useHttp5);
+      ClientBuilder builder = new client.ClientBuilder().withHttp5(useHttp5);
 
       if (useAwsAuth) {
         // Configure AWS authentication
