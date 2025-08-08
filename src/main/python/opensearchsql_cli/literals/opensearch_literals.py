@@ -24,11 +24,14 @@ class Literals:
         """
         package_root = os.path.dirname(__file__)
 
-        # Use different JSON files based on language
-        if language.lower() == "ppl":
-            literal_file = os.path.join(package_root, "opensearch_literals_ppl.json")
-        else:
-            literal_file = os.path.join(package_root, "opensearch_literals_sql.json")
+        LANGUAGE_LITERALS = {
+            "ppl": "opensearch_literals_ppl.json",
+            "sql": "opensearch_literals_sql.json",
+        }
+        literal_file = os.path.join(
+            package_root,
+            LANGUAGE_LITERALS.get(language.lower(), "opensearch_literals_sql.json"),
+        )
 
         with open(literal_file) as f:
             literals = json.load(f)

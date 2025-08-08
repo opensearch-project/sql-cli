@@ -202,14 +202,14 @@ def parse_respecting_nesting(content, target_char, split_mode=True):
 def split_respecting_nesting(content, separator):
     """
     Split content on separator while respecting nested structures.
-    
+
     Args:
         content (str): Content to split
         separator (str): Character to split on
-        
+
     Returns:
         list: List of split elements
-        
+
     Example:
         Input: "table=[[OpenSearch, employees]], PushDownContext=[[PROJECT->[name]]]"
         Output: ["table=[[OpenSearch, employees]]", "PushDownContext=[[PROJECT->[name]]]"]
@@ -220,14 +220,14 @@ def split_respecting_nesting(content, separator):
 def find_first_unescaped_char(content, target_char):
     """
     Find the first occurrence of target_char that's not inside nested structures.
-    
+
     Args:
         content (str): Content to search in
         target_char (str): Character to find
-        
+
     Returns:
         int: Position of first unescaped character, or -1 if not found
-        
+
     Example:
         Input: "table=[[OpenSearch, employees]]", "="
         Output: 5
@@ -240,11 +240,11 @@ def parse_parameters(params_str):
     Dynamically parse parameter string into structured format.
 
     Args:
-        params_str (str): Parameter string 
+        params_str (str): Parameter string
 
     Returns:
         dict: Parsed parameters
-        
+
     Example:
         Input: "group=[{}], sum(aa)=[SUM($0)]"
         Output: {
@@ -299,7 +299,7 @@ def parse_arrow_structure(content):
 
     Returns:
         dict: Parsed structure
-        
+
     Example:
         Input: "PROJECT->[field1, field2, ...]"
         Output: {"PROJECT->": ["field1", "field2", ...]}
