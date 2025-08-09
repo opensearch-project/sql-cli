@@ -321,6 +321,7 @@ class SqlVersion:
             spinner="dots",
         ):
             log_file = os.path.join(PROJECT_ROOT, "logs", "sql_build.log")
+            os.makedirs(os.path.dirname(log_file), exist_ok=True)
             with open(log_file, "w") as file:
                 result = subprocess.run(
                     ["./gradlew", "clean", "assemble"],
@@ -384,6 +385,7 @@ class SqlVersion:
                 spinner="dots",
             ):
                 log_file = os.path.join(PROJECT_ROOT, "logs", "sqlcli_build.log")
+                os.makedirs(os.path.dirname(log_file), exist_ok=True)
                 with open(log_file, "w") as file:
                     result = subprocess.run(
                         cmd_args,
