@@ -77,6 +77,8 @@ class TestSqlVersion:
                     f"[bold red]ERROR:[/bold red] [red]Version {version} is currently not supported[/red]"
                 )
 
+    @patch("opensearchsql_cli.sql.sql_version.os.path.dirname")
+    @patch("opensearchsql_cli.sql.sql_version.os.makedirs")
     @patch("opensearchsql_cli.sql.sql_version.os.path.exists")
     @patch("opensearchsql_cli.sql.sql_version.os.path.join")
     @patch("opensearchsql_cli.sql.sql_version.subprocess.run")
@@ -89,6 +91,8 @@ class TestSqlVersion:
         mock_run,
         mock_join,
         mock_exists,
+        mock_makedirs,
+        mock_dirname,
         mock_get_all_versions,
     ):
         """
@@ -114,6 +118,7 @@ class TestSqlVersion:
                 return "/mock/path/opensearchsqlcli-3.1.0.0.jar"
 
         mock_join.side_effect = join_side_effect
+        mock_dirname.return_value = "/mock/path"
         mock_run.return_value = MagicMock(returncode=0)
         mock_file = MagicMock()
         mock_open.return_value.__enter__.return_value = mock_file
