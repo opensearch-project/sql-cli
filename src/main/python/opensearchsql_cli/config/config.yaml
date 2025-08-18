@@ -1,0 +1,110 @@
+# OpenSearch SQL CLI Configuration
+# Edit this file to change default settings
+# Must exit the CLI first if editing while CLI is running
+
+Main:
+  # Multi-line mode allows breaking up the statements into multiple lines. 
+  # If this is set to True, then the end of the statements must have a semi-colon.
+  # If this is set to False then statements can't be split into multiple lines. 
+  # End of line (return) is considered as the end of the statement.
+  multi_line: false
+
+Connection:
+  # OpenSearch connection settings
+  #     For HTTP: localhost:9200
+  #     For HTTPS: https://localhost:9200
+  #     for AWS SigV4: URL
+  # If not providing port number after ":"
+  # By default: HTTP port is 9200
+  #             HTTPS port is 443
+  endpoint: ""
+  
+  # Authentication credentials are necessary for HTTPS
+  # Must do "" as a string
+  # SECURITY WARNING:   Storing passwords in this file poses a security risk as it is not encrypted.
+  #                     Consider using -u username:password instead for sensitive environments.
+  username: ""
+  password: ""
+  
+  # Set to true to skip certificate validation, -k flag
+  insecure: false
+  
+  # Set to true to use AWS SigV4 authentication
+  aws_auth: false
+
+Query:
+  # Default query language: PPL, SQL
+  # Default output format: Table, JSON, CSV 
+  # Set to true for vertical table display mode
+  language: ""
+  format: ""
+  vertical: false
+
+SqlVersion:
+  # OpenSearch SQL plugin version, must do "" as a string
+  # version "version": use the Maven repository 
+  # local "path/to/sql": use local jar files with absolute path
+  # remote "url": use git clone then use its local jar files
+  # branch_name "name": branch name to clone 
+  # remote_output "path/to/save": path to save the repo to
+  version: ""
+  local: ""
+  remote: ""
+  branch_name: ""
+  remote_output: ""
+
+SqlSettings:
+  # Advanced settings for OpenSearch SQL plugin
+  # QUERY_SIZE_LIMIT: Maximum number of rows to return in a query result
+  #   PPL Calcite results are limited by this number setting
+  #   So, "HEAD" will not increase the limit
+  #   Must modify this number to increase the result hits
+  # FIELD_TYPE_TOLERANCE: Whether to tolerate field type mismatches
+  # CALCITE_ENGINE_ENABLED: Whether to enable the Calcite SQL engine
+  # CALCITE_FALLBACK_ALLOWED: Whether to allow fallback to legacy engine if Calcite fails
+  # CALCITE_PUSHDOWN_ENABLED: Whether to enable pushdown optimization in Calcite
+  # CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR: Factor for row count estimation in pushdown
+  # SQL_CURSOR_KEEP_ALIVE: Time to keep cursor alive in minutes
+  QUERY_SIZE_LIMIT: 200
+  FIELD_TYPE_TOLERANCE: true
+  CALCITE_ENGINE_ENABLED: true
+  CALCITE_FALLBACK_ALLOWED: true
+  CALCITE_PUSHDOWN_ENABLED: true
+  CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR: 1.0
+  SQL_CURSOR_KEEP_ALIVE: 1
+
+File:
+  # SQL library log location.
+  # Default: "logs/sql_library.log"
+  sql_log: ""
+
+  # CLI command history file location.
+  # Default: "src/main/python/opensearchsql_cli/.cli_history"
+  history_file: ""
+
+  # Saved query file location
+  # Default: "src/main/python/opensearchsql_cli/query/save_query/saved.txt"
+  saved_query: ""
+
+# Custom colors for various UI elements
+Colors:
+  completion-menu.completion.current: "bg:#ffffff #000000"
+  completion-menu.completion: "bg:#008888 #ffffff"
+  completion-menu.meta.completion.current: "bg:#44aaaa #000000"
+  completion-menu.meta.completion: "bg:#448888 #ffffff"
+  completion-menu.multi-column-meta: "bg:#aaffff #000000"
+  scrollbar.arrow: "bg:#003333"
+  scrollbar: "bg:#00aaaa"
+  selected: "#ffffff bg:#6666aa"
+  search: "#ffffff bg:#4444aa"
+  search.current: "#ffffff bg:#44aa44"
+  bottom-toolbar: "bg:#222222 #aaaaaa"
+  bottom-toolbar.off: "bg:#222222 #888888"
+  bottom-toolbar.on: "bg:#222222 #ffffff"
+  search-toolbar: "noinherit bold"
+  search-toolbar.text: "nobold"
+  system-toolbar: "noinherit bold"
+  arg-toolbar: "noinherit bold"
+  arg-toolbar.text: "nobold"
+  bottom-toolbar.transaction.valid: "bg:#222222 #00ff5f bold"
+  bottom-toolbar.transaction.failed: "bg:#222222 #ff005f bold"

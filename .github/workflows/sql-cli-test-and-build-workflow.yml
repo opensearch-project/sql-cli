@@ -18,7 +18,7 @@ jobs:
         working-directory: .
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.12]
         opensearch-version: [ latest ]
 
     steps:
@@ -60,7 +60,7 @@ jobs:
           cp -r ./dist/*.tar.gz ./dist/*.whl opensearchsql-builds/
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: opensearchsql
           path: opensearchsql-builds
