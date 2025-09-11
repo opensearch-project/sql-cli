@@ -14,9 +14,9 @@ class CalcitePlanLexer(RegexLexer):
             (r'\$[\d\w]+', Name.Variable),
             (r'"[^"]*"', String),
             (r'\d+', Number),
-            (r'[a-zA-Z_][\w#\.]*=', Name.Attribute),
+            (r'[a-zA-Z_][\w\.#\d]*(?:=)', Name.Attribute),
             (r'\s+', Text),
-            (r'null', Keyword),
+            (r'null|true|false', Keyword),
             (r'[\w\-]+', Text),
             (r'[^\w]', Punctuation),
         ]
