@@ -1,0 +1,42 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.32.4
+      x-amz-content-sha256:
+      - e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      x-amz-date:
+      - 20250718T032424Z
+      x-amz-security-token:
+      - IQoJb3JpZ2luX2VjEKz//////////wEaCXVzLWVhc3QtMSJHMEUCIQDICQ9mzzOGMli2rsXWXeGJkkXcxeEgR14qAIVWU/llWQIgOYdi00EBOdpViIMYPuX7s5k4USCmiPqRiDpSGPrrYi8quAMIlf//////////ARABGgwwNTMyNTA0MjQxNTEiDP85Ovm3JLDBTV0QdyqMA+eDbYozAcRezPYXoVjHHjOCYvz2O048bZY/sRUjjY4IB3uXrpWQMvHHCAVs2Acn3HvIcAr6B+Uolyr7LZHeX9g4pjWY+d9LHHCSbCcRkFEeDnadmwhoXGES95Stfl8EsoI/52eRf5sU4ad14s5qvChMhVJzExp+tOmmCuzQaefmd7TtIG95ZAo22daRTj8a7p50qcZ5HAwlvP1rGBKFDF2l3/PRxITQ/hGqqTI5+Dq65wi4ydQG1NW+TJ8/bTFSqQkBzVTYrdcgeN3Pp6HINWjMOVoCOppWOH7/UDKWrB0UBOBQ8GPmYD4pEd9zsT7bxwZfoBz2TzNCC9wf6pFEes720vD60D/7Uq1FPumsjerpUTxzzHZzdP7mGNrW26hjAlpuVQcqutNWsy3z6nQ667qEzlm6KxGQ2d3oNjmO8oYsqWbYIWGwJt2gz/IOCrXYRdnJp9LQd0uJYYfNdO2e1zD2sAq68bsD9VG+Tm0VTIT3w+XCCBbiSJKQAugziShjjnD47slcWFpIrI+BbjCYq8zCBjqdAdEqAvMeVY+hzEMmHilt126I6bWo0qixqmhCPxvon0Ka7BO0i3FF6O5QxcGxn83NANBstVmjgidi6gmj1GKBU3GEytrQILATyklh5PDXuPPjwXv4dqpvAuMLvxbIine1XG6fHnAkKS4h9yhRmf1TsavS5WsAdfjTaK4hJz2RBCVSMq3YkO59qKnPi9Pgi8DrpqH0VA/TEIRPf6U+W7Y=
+    method: GET
+    uri: https://search-cli-test-r2qtaiqbhsnh5dgwvzkcnd5l2y.us-east-2.es.amazonaws.com/
+  response:
+    body:
+      string: '{"message":"The security token included in the request is invalid"}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '88'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 22 Jul 2025 03:24:24 GMT
+      access-control-allow-origin:
+      - '*'
+      content-encoding:
+      - gzip
+      x-amzn-requestid:
+      - 06c3e026-d20c-44b8-877d-d09f5af0ee37
+    status:
+      code: 403
+      message: Forbidden
+version: 1

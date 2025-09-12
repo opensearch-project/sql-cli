@@ -1,3 +1,19 @@
+<img src="https://opensearch.org/assets/brand/SVG/Logo/opensearch_logo_default.svg" height="64px"/>
+
+- [OpenSearch SQL CLI](#OpenSearch-SQL-CLI)
+- [Query Compatibility Testing](#query-compatibility-testing)
+- [SQL CLI](#sql-cli)
+- [Features](#features)
+- [Version](#version)
+- [Install](#install)
+- [Startup Commands](#startup-commands)
+- [Interactive Mode Commands](#interactive-mode-commands)
+- [Configuration](#configuration)
+- [Using the CLI](#using-the-cli)
+- [Code of Conduct](#code-of-conduct)
+- [Security Issue Notifications](#security-issue-notifications)
+- [Licensing](#licensing)
+- [Copyright](#copyright)
 
 [![SQL CLI Test and Build](https://github.com/opensearch-project/sql-cli/workflows/SQL%20CLI%20Test%20and%20Build/badge.svg)](https://github.com/opensearch-project/sql-cli/actions)
 [![Latest Version](https://img.shields.io/pypi/v/opensearchsql.svg)](https://pypi.python.org/pypi/opensearchsql/)
@@ -8,14 +24,28 @@
 
 # OpenSearch SQL CLI
 
+Interactive command-line interface (CLI) for executing PPL (Piped Processing Language) and SQL queries against OpenSearch clusters. Supports secure and insecure endpoints, AWS SigV4 authentication, autocomplete, syntax highlighting, configurable output formats (Table, JSON, CSV), and saved query history. Easily toggle language modes, SQL plugin versions, and vertical display formatting - all from a single terminal session.
+
 The SQL CLI component in OpenSearch is a stand-alone Python application and can be launched by a 'wake' word `opensearchsql`. 
 
-It only supports [OpenSearch SQL Plugin](https://opensearch.org/docs/latest/search-plugins/sql/)
-You must have the OpenSearch SQL plugin installed to your OpenSearch instance to connect. 
 Users can run this CLI from Unix like OS or Windows, and connect to any valid OpenSearch end-point such as Amazon OpenSearch Service.
 
 ![](screenshots/usage.gif)
 
+### Query Compatibility Testing
+
+Users can test their existing queries against newer OpenSearch SQL plug-in versions before upgrading their OpenSearch clusters.
+
+For example, user is currently using version **2.19** may want to validate query compatibility with version **3.1** first.
+
+By using this CLI tool, they can:
+- Load and run SQL 3.1 logic locally, without upgrading their OpenSearch cluster.
+- Verify that their current queries execute as expected under the new SQL engine.
+- Avoid potential breaking changes and reduce the need for rollback in production.
+
+Moreover, developers can use this to test their own SQL plug-in implementation.
+
+This CLI acts as a safe testing environment, allowing smooth transitions between versions with confidence.
 
 ### SQL CLI
 
@@ -26,19 +56,44 @@ Users can run this CLI from Unix like OS or Windows, and connect to any valid Op
 [sql-cli-build-badge]: https://github.com/opensearch-project/sql-cli/actions/workflows/sql-cli-test-and-build-workflow.yml/badge.svg
 [sql-cli-build-link]: https://github.com/opensearch-project/sql-cli/actions/workflows/sql-cli-test-and-build-workflow.yml
 
+## Requirements
+
+- **Python** version 3.12+
+- **Java** version 21
+
 ## Features
 
-* Multi-line input
-* Autocomplete for SQL syntax and index names
-* Syntax highlighting
-* Formatted output:
-* Tabular format
-* Field names with color
-* Enabled horizontal display (by default) and vertical display when output is too wide for your terminal, for better visualization
-* Pagination for large output
-* Connect to OpenSearch with/without security enabled on either **OpenSearch or Amazon OpenSearch Service domains**.
-* Supports loading configuration files
-* Supports all SQL plugin queries
+- **Multi-line input**
+- **Autocomplete** for SQL, PPL, index names
+- **Syntax highlighting**
+- **Formatted output**
+  - Table
+  - JSON
+  - CSV
+- **Field names** displayed with color
+- **Horizontal display** for table format
+  - Vertical display automatically used when output is too wide
+  - Toggle vertical mode on/off with `-v`
+- **Connect to OpenSearch**
+  - Works with or without OpenSearch security enabled
+  - Supports Amazon OpenSearch Service domains
+- **Query operations**
+  - Execute queries
+  - Explain plans
+  - Save and load queries
+- **SQL plugin version selection**
+  - Maven respository
+  - Local directory
+  - Git clone 
+- **Command history**
+  - `src/main/python/opensearchsql_cli/.cli_history`
+- **Configuration file**
+  - `src/main/python/opensearchsql_cli/config/config_file.yaml`
+- **SQL plug-in connection log**
+  - `src/main/java/sql_library.log`
+- **Gradle log**
+  - `sqlcli_build.log`: SQL CLI jar
+  - `sql_build.log`: SQL Plug-in jar
 
 ## Version
 Unlike plugins which use 4-digit version number. SQl-CLI uses `x.x.x` as version number same as other python packages in OpenSearch family. As a client for OpenSearch SQL, it has independent release. 
@@ -58,46 +113,183 @@ To install the SQL CLI:
 
 1. We suggest you install and activate a python3 virtual environment to avoid changing your local environment:
 
-    ```
-    pip install virtualenv
-    virtualenv venv
-    cd venv
-    source ./bin/activate
-    ```
+```
+  pip install virtualenv
+  virtualenv venv
+  cd venv
+  source ./bin/activate
+```
 
 
-1. Install the CLI:
+2. Install the CLI:
 
-    ```
-    pip3 install opensearchsql
-    ```
+> TODO: Right now, user can install `pip install -e .` at the root directory until the current version package being published.
 
-    The SQL CLI only works with Python 3, since Python 2 is no longer maintained since 01/01/2020. See https://pythonclock.org/
+  ```
+    pip install opensearchsql
+  ```
 
-
-1. To launch the CLI, run:
-
-    ```
-    opensearchsql https://localhost:9200 --username admin --password < Admin password >
-    ```
-    By default, the `opensearchsql` command connects to [http://localhost:9200](http://localhost:9200/).
+  The SQL CLI only works with Python 3, since Python 2 is no longer maintained since 01/01/2020. See https://pythonclock.org/
 
 
+3. To launch the CLI, run:
 
-## Configure
+  ``` 
+    opensearchsql
+  ```
 
-When you first launch the SQL CLI, a configuration file is automatically created at `~/.config/opensearchsql-cli/config` (for MacOS and Linux), the configuration is auto-loaded thereafter.
+## Startup Commands
+
+### Defaults: if no arguments provided
+- **Language**: PPL  
+- **Endpoint**: `http://localhost:9200`  
+- **Output Format**: Table  
+- **SQL Plugin Version**: Latest version
+
+### If not specify protocol or port number
+  - The default protocol is **HTTP** with port number **9200**. 
+  - If using **HTTPS** without specifying a port, port **443** is used by default.
+
+| Options                               | Description                                                                   |
+|---------------------------------------|-------------------------------------------------------------------------------|
+| `-e`, `--endpoint` `<host:port>`      | Set the OpenSearch endpoint (e.g., `protocol://domain:port`)                  |
+| `-u`, `--user` `<username:password>`  | Provide credentials for secure clusters                                       |
+| `-k`, `--insecure`                    | Ignore SSL certificate verification (use with `https` protocol)               |
+| `-l`, `--language` `<language>`       | Choose query language: `ppl` or `sql`                                         |
+| `-f`, `--format` `<format>`           | Set output format: `table`, `json`, or `csv`                                  |
+| `-q`, `--query` `<query>`             | Single query execution                                                        |
+| `--version` `<version>`               | Set OpenSearch SQL plugin version (e.g., `3.1`, `2.19`)                       |
+| `--local` `<directory>`               | Use a local directory containing the SQL plugin JAR                           |
+| `--remote` `<git_url>`                | Clone from a git repository URL                                               |
+| `-b`, `--branch` `<branch_name>`      | Branch name to clone (default is main)                                        |
+| `-o`, `--output` `<directory>`        | Custom output directory for cloned repository (used with `--remote`)          |
+| `--rebuild`                           | Rebuild or update the corresponding JAR file                                  |
+| `-c`, `--config`                      | Show current configuration values                                             |
+| `--help`                              | Show help message and usage examples                                          |
+
+### Example Usages
+
+```bash
+# Start with all defaults
+opensearchsql
+
+# Use secure endpoint with credentials
+opensearchsql -e https://localhost:9200 -u admin:password -k
+
+# Use AWS SigV4 connection
+opensearchsql --aws-auth amazon.com
+
+# Use SQL and JSON output
+opensearchsql -l sql -f json
+
+# Single query execution
+opensearchsql -q "source=index_name"
+
+# Load specific plugin version
+opensearchsql --version 2.19
+
+# Use a local SQL plugin directory
+opensearchsql --local /path/to/sql/plugin/directory
+
+# Use a remote git repository with main branch
+opensearchsql --remote "https://github.com/opensearch-project/sql.git"
+
+# Use a remote git repository with a specific branch
+opensearchsql --remote "https://github.com/opensearch-project/sql.git" -b "feature-branch"
+
+# Clone a repository to a custom directory
+opensearchsql --remote "https://github.com/opensearch-project/sql.git" -o /path/to/custom/directory
+```
+
+## Interactive Mode Commands
+
+| Options                          | Description                                           |
+|----------------------------------|-------------------------------------------------------|
+| `<query>`                        | Execute a query                                       |
+| `-l <type>`                      | Change language: `ppl`, `sql`                         |
+| `-f <type>`                      | Change output format: `table`, `json`, or `csv`       |
+| `-v`                             | Toggle vertical table display mode                    |
+| `-s --save <name>`               | Save the latest query with a given name               |
+| `-s --load <name>`               | Load and execute a saved query                        |
+| `-s --remove <name>`             | Remove a saved query by name                          |
+| `-s --list`                      | List all saved query names                            |
+| `help`                           | Show this help message                                |
+| `exit`, `quit`, `q`              | Exit the interactive mode                             |
+
+### Version Switching
+To use a different OpenSearch SQL plug-in version, you must restart the CLI 
+
+## Configuration
+
+When you first launch the SQL CLI, a configuration file is automatically loaded.
 
 You can also configure the following connection properties:
 
+### Main
 
-* `endpoint`: You do not need to specify an option, anything that follows the launch command `opensearchsql` is considered as the endpoint. If you do not provide an endpoint, by default, the SQL CLI connects to [http://localhost:9200](http://localhost:9200/).
-* `-u/-w`: Supports username and password for HTTP basic authentication, such as:
-    * OpenSearch with [OpenSearch Security Plugin](https://opensearch.org/docs/latest/security/) installed
-    * Amazon OpenSearch Service domain with [Fine Grained Access Control](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/fgac.html) enabled
-* `--aws-auth`: Turns on AWS sigV4 authentication to connect to an Amazon Elasticsearch Service endpoint. Use with the AWS CLI (`aws configure`) to retrieve the local AWS configuration to authenticate and connect.
+| Key          | Description                                            | Options         | Default   | 
+|--------------|--------------------------------------------------------|-----------------|-----------|
+| `multi_line` |  allows breaking up the statements into multiple lines | `true`, `false` | `false`   |
 
-For a list of all available configurations, see [clirc](src/opensearch_sql_cli/conf/clirc).
+### Connection Settings
+
+| Key        | Description                                                   | Example             | Default         |
+|------------|---------------------------------------------------------------|---------------------|-----------------|
+| `endpoint` | OpenSearch URL (`http://localhost:9200`, `https://localhost:9200`, or AWS SigV4 endpoint) | `localhost:9200`    | `localhost:9200`|
+| `username` | Username for HTTPS authentication *(use `""` if not set)*     | `"admin"`           | `""`            |
+| `password` | Password for HTTPS authentication *(use `""` if not set)*     | `"admin"`           | `""`            |
+| `insecure` | Skip certificate validation (`-k` flag)                       | `true` / `false`    | `false`         |
+| `aws_auth` | Use AWS SigV4 authentication                                  | `true` / `false`    | `false`         |
+
+> ⚠️ **Security Warning**: Passwords stored in this file are not encrypted. Consider using `-u username:password` instead for sensitive environments.
+
+### Query Settings
+
+| Key        | Description                            | Options                    | Default  |
+|------------|----------------------------------------|----------------------------|----------|
+| `language` | Query language                         | `ppl`, `sql`               | `ppl`    |
+| `format`   | Output format                          | `table`, `json`, `csv`     | `table`  |
+| `vertical` | Use vertical table display mode        | `true` / `false`           | `false`  |
+
+### SQL Version Settings
+
+| Key            | Description                                  | Example                                           | Default  |
+|----------------|----------------------------------------------|---------------------------------------------------|----------|
+| `version`      | Use Maven repository version (as a string)   | `"3.1"`                                           | `""`     |
+| `local`        | Use local JAR files with absolute path       | `"/path/to/sql/plugin/directory"`                 | `""`     |
+| `remote`       | Git repository URL to clone                  | `"https://github.com/opensearch-project/sql.git"` | `""`     |
+| `branch_name`  | Branch name to clone from the repository     | `"feature-branch"`                                | `""`     |
+| `remote_output`| Custom directory for cloned repository       | `"/path/to/custom/directory"`                     | `""`     |
+
+### SQL Plugin Settings
+
+| Key                                             | Description                                   | Default  |
+|-------------------------------------------------|-----------------------------------------------|----------|
+| `QUERY_SIZE_LIMIT`                              | Maximum number of rows returned per query     | `200`    |
+| `FIELD_TYPE_TOLERANCE`                          | Tolerate field type mismatches                | `true`   |
+| `CALCITE_ENGINE_ENABLED`                        | Enable the Calcite SQL engine                 | `true`   |
+| `CALCITE_FALLBACK_ALLOWED`                      | Fallback to legacy engine if Calcite fails    | `true`   |
+| `CALCITE_PUSHDOWN_ENABLED`                      | Enable pushdown optimization in Calcite       | `true`   |
+| `CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR`   | Row count estimation factor for pushdown      | `1.0`    |
+| `SQL_CURSOR_KEEP_ALIVE`                         | Cursor keep-alive time in minutes             | `1`      |
+
+> **Note**: **PPL Calcite** result is limited by `QUERY_SIZE_LIMIT` number
+
+### File Paths
+
+| Key             | Description           | Default Path                                                   |
+|-----------------|-----------------------|----------------------------------------------------------------|
+| `sql_log`       | SQL library log       | `src/main/java/sql_library.log`                                |
+| `history_file`  | CLI command history   | `src/main/python/opensearchsql_cli/.cli_history`               |
+| `saved_query`   | Saved query           | `src/main/python/opensearchsql_cli/query/save_query/saved.txt` |
+
+### Custom Colors
+
+The CLI supports customizing the colors of various UI elements through the config file. You can modify these settings to match your terminal theme or personal preferences.
+
+Color format: `"bg:<background_color> <text_color> [style]"` where colors are hex values and style can be `bold`, `italic`, etc.
+
+For a list of all available configurations, see [config.yaml](src/main/python/opensearchsql_cli/config/config.yaml).
 
 
 
@@ -111,33 +303,17 @@ For a list of all available configurations, see [clirc](src/opensearch_sql_cli/c
     ```
 
 
-1. Run a simple SQL command in OpenSearch SQL CLI:
+1. Run a simple SQL/PPL command in OpenSearch SQL CLI:
 
+    ```sql
+    # PPL
+    source=accounts
+    # SQL
+    SELECT * FROM accounts
     ```
-    SELECT * FROM accounts;
-    ```
 
-    By default, you see a maximum output of 200 rows. To show more results, add a `LIMIT` clause with the desired value.
+The CLI supports all types of query that OpenSearch PPL/SQL supports. Refer to [OpenSearch SQL basic usage documentation.](https://github.com/opensearch-project/sql/blob/main/docs/user/dql/basics.rst)
 
-The CLI supports all types of query that OpenSearch SQL supports. Refer to [OpenSearch SQL basic usage documentation.](https://github.com/opensearch-project/sql/blob/main/docs/user/dql/basics.rst)
-
-
-## Query options
-
-Run single query from command line with options
-
-
-* `--help`: help page for options
-* `-q`: follow by a single query
-* `-f`: support *jdbc/raw* format output
-* `-v`: display data vertically
-* `-e`: translate sql to DSL
-
-## CLI Options
-
-* `-l`: Query language option. Available options are [sql, ppl]. By default it's using sql.
-* `-p`: always use pager to display output
-* `--clirc`: provide path of config file to load
 
 ## Code of Conduct
 
@@ -155,5 +331,3 @@ See the [LICENSE](LICENSE.TXT) file for our project's licensing. We will ask you
 ## Copyright
 
 Copyright OpenSearch Contributors. See [NOTICE](NOTICE) for details.
-
-
