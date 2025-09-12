@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from os.path import expanduser, expandvars
 
+from opensearch_sql_cli.calcite import format_calcite_explain
 from prompt_toolkit.history import FileHistory
 
 """
@@ -10,11 +11,14 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 
+import ast
 import click
 import re
 import pyfiglet
 import os
 import json
+import pprint
+from opensearchpy.exceptions import OpenSearchException
 
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.enums import DEFAULT_BUFFER
@@ -141,7 +145,12 @@ class OpenSearchSqlCli:
                     formatter = Formatter(settings)
                     formatted_output = formatter.format_output(output)
                     self.echo_via_pager("\n".join(formatted_output))
-
+            except OpenSearchException as e:
+                msg = ast.literal_eval(str(e))
+                if 'explain' in text.lower() and msg.get('calcite', False):
+                    print(format_calcite_explain(msg))
+                else:
+                    pprint.pprint(msg)
             except Exception as e:
                 print(repr(e))
 
