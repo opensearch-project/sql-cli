@@ -9,14 +9,84 @@ This guide provides comprehensive information for developers who want to contrib
 - [Style](#style)
 - [Release Guide](#release-guide)
 
-### Development Environment Set Up
-- `pip install virtualenv`
-- `virtualenv venv` to create virtual environment for **Python 3**
-- `source ./venv/bin/activate` activate virtual env.
-- `cd` into project root folder.
-- `pip install --editable .` will install all dependencies from `setup.py`.
+## Development Environment Setup
 
-### Code Architecture Details
+### Prerequisites
+
+**Essential Requirements:**
+- **Git** - Required for cloning the repository
+- **Python 3.12+** - Required runtime environment
+- **pip** - Required for installing Python dependencies
+- **Java 21** - Required Java runtime (Java 21 recommended, Java 24 supported, Java 21 preferred for Amazon Linux)
+- **OpenSearch cluster** with SQL plugin installed
+
+> **Note for Windows Users**: The SQL CLI does not work natively on Microsoft Windows. Windows users can use WSL (Windows Subsystem for Linux) to run the CLI.
+
+📋 **For detailed installation instructions for all prerequisites, see [PREREQUISITES.md](PREREQUISITES.md)**
+
+> ⚠️ **Important**: Before proceeding with the installation, ensure all prerequisites are installed. If you need help installing any of the required tools (Git, Python 3.12+, pip, Java 21), please follow the detailed instructions in [PREREQUISITES.md](PREREQUISITES.md).
+
+### Installation Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/opensearch-project/sql-cli
+   cd sql-cli
+   ```
+
+2. **Set up Python virtual environment**
+   ```bash
+   python3 -m venv venv
+   source ./venv/bin/activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -e .
+   ```
+
+4. **Verify Java installation**
+   ```bash
+   java --version
+   ```
+   Expected output (Java 21 or higher):
+   ```
+   openjdk 21.0.2 2024-01-16
+   OpenJDK Runtime Environment Temurin-21.0.2+13 (build 21.0.2+13)
+   OpenJDK 64-Bit Server VM Temurin-21.0.2+13 (build 21.0.2+13, mixed mode, sharing)
+   ```
+
+5. **Set Java environment variables** (adjust version number based on your installed Java version)
+   
+   **macOS:**
+   ```bash
+   export JAVA_HOME=$(/usr/libexec/java_home -v 21)  # Use -v 24 for Java 24
+   export PATH=$JAVA_HOME/bin:$PATH
+   ```
+   
+   **Linux:**
+   ```bash
+   # Find Java installation
+   sudo find /usr -name "java" -type f 2>/dev/null | grep bin
+   
+   # Set JAVA_HOME (replace with your Java installation path)
+   export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto.x86_64
+   export PATH=$JAVA_HOME/bin:$PATH
+   
+   # Make permanent
+   echo 'export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto.x86_64' >> ~/.bashrc
+   echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+   source ~/.bashrc
+   ```
+
+6. **Launch the CLI**
+   ```bash
+   opensearchsql
+   ```
+   
+> **Note**: The SQL CLI only works with Python 3, as Python 2 is no longer maintained since 01/01/2020.
+
+## Code Architecture Details
 
 #### Layered Architecture
 
