@@ -36,6 +36,8 @@ git --version
 
 ## Python 3.12 Installation
 
+> **Note**: The SQL CLI only works with Python 3, as Python 2 is no longer maintained since 01/01/2020.
+
 **Linux (Ubuntu/Debian):**
 ```bash
 sudo apt update

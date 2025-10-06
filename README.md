@@ -183,7 +183,7 @@ release tag: sql-cli-v1.0.0
    opensearchsql -e https://your-cluster-endpoint
    ```
 
-> **Note**: The SQL CLI only works with Python 3, as Python 2 is no longer maintained since 01/01/2020.
+
 
 ## Startup Commands
 
