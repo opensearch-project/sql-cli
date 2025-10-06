@@ -172,8 +172,15 @@ release tag: sql-cli-v1.0.0
    ```
 
 6. **Launch the CLI**
+   
+   > **Connection Note**: By default, the CLI connects to `http://localhost:9200`. If you have OpenSearch running locally, you can launch directly. To connect to a remote cluster, use the `-e` flag with your cluster endpoint.
+   
    ```bash
+   # Connect to local OpenSearch cluster (default)
    opensearchsql
+   
+   # Connect to remote cluster
+   opensearchsql -e https://your-cluster-endpoint
    ```
 
 > **Note**: The SQL CLI only works with Python 3, as Python 2 is no longer maintained since 01/01/2020.
