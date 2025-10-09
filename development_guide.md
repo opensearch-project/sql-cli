@@ -9,14 +9,13 @@ This guide provides comprehensive information for developers who want to contrib
 - [Style](#style)
 - [Release Guide](#release-guide)
 
-### Development Environment Set Up
-- `pip install virtualenv`
-- `virtualenv venv` to create virtual environment for **Python 3**
-- `source ./venv/bin/activate` activate virtual env.
-- `cd` into project root folder.
-- `pip install --editable .` will install all dependencies from `setup.py`.
+## Development Environment Setup
 
-### Code Architecture Details
+For complete setup instructions including prerequisites and installation steps, see the main [README.md](README.md#prerequisites) file.
+
+Once you have the environment set up, you can proceed with the development-specific information below.
+
+## Code Architecture Details
 
 #### Layered Architecture
 

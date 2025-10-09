@@ -56,11 +56,6 @@ This CLI acts as a safe testing environment, allowing smooth transitions between
 [sql-cli-build-badge]: https://github.com/opensearch-project/sql-cli/actions/workflows/sql-cli-test-and-build-workflow.yml/badge.svg
 [sql-cli-build-link]: https://github.com/opensearch-project/sql-cli/actions/workflows/sql-cli-test-and-build-workflow.yml
 
-## Requirements
-
-- **Python** version 3.12+
-- **Java** version 21
-
 ## Features
 
 - **Multi-line input**
@@ -104,39 +99,91 @@ release branch: sql-cli-1.0
 release tag: sql-cli-v1.0.0 
 ```
 
-## Install
+## Prerequisites
 
-Launch your local OpenSearch instance and make sure you have the OpenSearch SQL plugin installed.
+### Essential Requirements:
+- **Git** - Required for cloning the repository
+- **Python 3.12+** - Required runtime environment
+- **pip** - Required for installing Python dependencies
+- **Java 21** - Required Java runtime (Java 21 recommended, Java 24 supported, Java 21 preferred for Amazon Linux)
+- **OpenSearch cluster** with SQL plugin installed
 
-To install the SQL CLI:
+> **Note for Windows Users**: The SQL CLI does not work natively on Microsoft Windows. Windows users can use WSL (Windows Subsystem for Linux) to run the CLI.
+
+📋 **For detailed installation instructions for all prerequisites, see [PREREQUISITES.md](PREREQUISITES.md)**
+
+> ⚠️ **Important**: Before proceeding with the installation, ensure all prerequisites are installed. If you need help installing any of the required tools (Git, Python 3.12+, pip, Java 21), please follow the detailed instructions in [PREREQUISITES.md](PREREQUISITES.md).
+
+## Installation Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/opensearch-project/sql-cli
+   cd sql-cli
+   ```
+
+2. **Set up Python virtual environment**
+   ```bash
+   python3 -m venv venv
+   source ./venv/bin/activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -e .
+   ```
+
+4. **Verify Java installation**
+   ```bash
+   java --version
+   ```
+   Expected output (Java 21 or higher):
+   ```
+   openjdk 21.0.2 2024-01-16
+   OpenJDK Runtime Environment Temurin-21.0.2+13 (build 21.0.2+13)
+   OpenJDK 64-Bit Server VM Temurin-21.0.2+13 (build 21.0.2+13, mixed mode, sharing)
+   ```
 
 
-1. We suggest you install and activate a python3 virtual environment to avoid changing your local environment:
+5. **Set Java environment variables** (adjust version number based on your installed Java version)
+   
+   **macOS:**
+   ```bash
+   export JAVA_HOME=$(/usr/libexec/java_home -v 21)  # Use -v 24 for Java 24
+   export PATH=$JAVA_HOME/bin:$PATH
+   ```
+   
+   **Linux:**
+   ```bash
+   # Find Java installation
+   sudo find /usr -name "java" -type f 2>/dev/null | grep bin
+   
+   # Set JAVA_HOME (replace with your Java installation path)
+   export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto.x86_64
+   export PATH=$JAVA_HOME/bin:$PATH
+   
+   # Make permanent
+   echo 'export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto.x86_64' >> ~/.bashrc
+   echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+   source ~/.bashrc
+   
+   # Switch Java versions (if multiple versions installed)
+   sudo alternatives --config java
+   ```
 
-```
-  pip install virtualenv
-  virtualenv venv
-  cd venv
-  source ./bin/activate
-```
+6. **Launch the CLI**
+   
+   > **Connection Note**: By default, the CLI connects to `http://localhost:9200`. If you have OpenSearch running locally, you can launch directly. To connect to a remote cluster, use the `-e` flag with your cluster endpoint.
+   
+   ```bash
+   # Connect to local OpenSearch cluster (default)
+   opensearchsql
+   
+   # Connect to remote cluster
+   opensearchsql -e https://your-cluster-endpoint
+   ```
 
 
-2. Install the CLI:
-
-> TODO: Right now, user can install `pip install -e .` at the root directory until the current version package being published.
-
-  ```
-    pip install opensearchsql
-  ```
-
-  The SQL CLI only works with Python 3, since Python 2 is no longer maintained since 01/01/2020. See https://pythonclock.org/
-
-
-3. To launch the CLI, run:
-
-  ``` 
-    opensearchsql
-  ```
 
 ## Startup Commands
 
