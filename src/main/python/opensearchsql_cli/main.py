@@ -11,7 +11,6 @@ import signal
 import pyfiglet
 
 from rich.console import Console
-from rich.status import Status
 from .sql import sql_connection
 from .query import SavedQueries
 from .sql.sql_library_manager import sql_library_manager
@@ -113,6 +112,8 @@ class OpenSearchSqlCli:
                 "--version",
                 help="Set OpenSearch SQL plug-in version: 3.1, 2.19",
                 autocompletion=lambda ctx, incomplete: [
+                    # TODO this shouldn't be hardcoded, find a dynamic release source
+                    "3.3",
                     "3.1",
                     "2.19",
                 ],
