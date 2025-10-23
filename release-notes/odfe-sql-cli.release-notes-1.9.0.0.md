@@ -2,12 +2,12 @@
 
 ### Features
 #### Elasticsearch and OpenSearch SQL Plugin Compatibility
-* Feature [#55](https://github.com/opendistro-for-elasticsearch/sql-cli/pull/55): Elasticsearch 7.8.0 and OpenSearch SQL Plugin 1.9.0 compatibility
-(issue: [#54](https://github.com/opendistro-for-elasticsearch/sql-cli/issues/54))
+* Feature [#55](https://github.com/amazon-archives/sql-cli/pull/55): Elasticsearch 7.8.0 and OpenSearch SQL Plugin 1.9.0 compatibility
+(issue: [#54](https://github.com/amazon-archives/sql-cli/issues/54))
 
 #### Documentation
-* Feature [#48](https://github.com/opendistro-for-elasticsearch/sql-cli/pull/48): Added README badges
+* Feature [#48](https://github.com/amazon-archives/sql-cli/pull/48): Added README badges
 
 ### Enhancements
-* Enhancement [#45](https://github.com/opendistro-for-elasticsearch/sql-cli/pull/45): Update project layout for better module import
-(issue: [#43](https://github.com/opendistro-for-elasticsearch/sql-cli/issues/43))
+* Enhancement [#45](https://github.com/amazon-archives/sql-cli/pull/45): Update project layout for better module import
+(issue: [#43](https://github.com/amazon-archives/sql-cli/issues/43))
