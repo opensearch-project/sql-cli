@@ -358,7 +358,7 @@ class SqlVersion:
         jar_path = self.get_jar_path()
 
         version_parts = self.version.split(".")
-        gradle_task = f"{version_parts[0]}_{version_parts[1]}_{version_parts[2]}"
+        gradle_task = f"{version_parts[0]}_{version_parts[1]}_{version_parts[2]}_{version_parts[3]}"
 
         # Add _local suffix for local builds
         if local_dir:

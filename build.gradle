@@ -454,7 +454,8 @@ ext.createLocalConfigurations = { String version, String localJarDir ->
         }
         
         // Add OpenSearch core dependency
-        dependencies.add(configName, "org.opensearch:opensearch:${version}")
+        String osVersion = version.tokenize('.').take(3).join('.')
+        dependencies.add(configName, "org.opensearch:opensearch:${osVersion}")
         
         println "Version ${version}: Using OpenSearch client version ${clientVersion}"
         
