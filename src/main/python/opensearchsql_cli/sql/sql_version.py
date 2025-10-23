@@ -49,7 +49,7 @@ class SqlVersion:
         Returns:
             list: List of all available versions
         """
-        url = "https://central.sonatype.com/repository/maven-snapshots/org/opensearch/query/unified-query-core/maven-metadata.xml"
+        url = "https://ci.opensearch.org/ci/dbc/snapshots/maven/org/opensearch/query/unified-query-core/maven-metadata.xml"
 
         response = requests.get(url)
         response.raise_for_status()
@@ -358,7 +358,7 @@ class SqlVersion:
         jar_path = self.get_jar_path()
 
         version_parts = self.version.split(".")
-        gradle_task = f"{version_parts[0]}_{version_parts[1]}_{version_parts[2]}_{version_parts[3]}"
+        gradle_task = f"{version_parts[0]}_{version_parts[1]}_{version_parts[2]}"
 
         # Add _local suffix for local builds
         if local_dir:
