@@ -2,4 +2,4 @@
 
 ### Features
 #### Elasticsearch and OpenSearch SQL Plugin Compatibility
-* Feature [#41](https://github.com/opendistro-for-elasticsearch/sql-cli/pull/41): Elasticsearch 7.7.0 and OpenSearch SQL Plugin 1.8.0 compatibility (issue: [#40](https://github.com/opendistro-for-elasticsearch/sql-cli/issues/40))
+* Feature [#41](https://github.com/amazon-archives/sql-cli/pull/41): Elasticsearch 7.7.0 and OpenSearch SQL Plugin 1.8.0 compatibility (issue: [#40](https://github.com/amazon-archives/sql-cli/issues/40))

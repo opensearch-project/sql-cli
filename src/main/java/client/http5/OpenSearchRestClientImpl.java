@@ -320,6 +320,29 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
     }
   }
 
+  // Pseduo-`@Override`: only applicable on versions 3.3 or newer, if we add `@Override` it breaks compilation on older versions
+  public void forceCleanup(OpenSearchRequest request) {
+    if (request instanceof OpenSearchScrollRequest) {
+      request.forceClean(
+          scrollId -> {
+            try {
+              ClearScrollRequest clearRequest = new ClearScrollRequest();
+              clearRequest.addScrollId(scrollId);
+              client.clearScroll(clearRequest, RequestOptions.DEFAULT);
+            } catch (IOException e) {
+              throw new IllegalStateException(
+                  "Failed to clean up resources for search request " + request, e);
+            }
+          });
+    } else {
+      request.forceClean(
+          pitId -> {
+            DeletePitRequest deletePitRequest = new DeletePitRequest(pitId);
+            deletePit(deletePitRequest);
+          });
+    }
+  }
+
   // Helper methods for AWS interceptor to sign its body
   private String getBodyContent(ToXContent request) throws IOException {
     XContentBuilder builder = XContentFactory.jsonBuilder();

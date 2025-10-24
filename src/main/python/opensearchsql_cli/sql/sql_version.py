@@ -49,7 +49,7 @@ class SqlVersion:
         Returns:
             list: List of all available versions
         """
-        url = "https://aws.oss.sonatype.org/content/repositories/snapshots/org/opensearch/query/unified-query-core/maven-metadata.xml"
+        url = "https://ci.opensearch.org/ci/dbc/snapshots/maven/org/opensearch/query/unified-query-core/maven-metadata.xml"
 
         response = requests.get(url)
         response.raise_for_status()
@@ -421,6 +421,13 @@ class SqlVersion:
         Returns:
             tuple: (success, result) where success is a boolean and result is the subprocess.CompletedProcess object
         """
+        if re.match(r"^\d+(\.\d+)*$", branch_name):
+            # If the branch is a version number, we actually want the tag, to sync with what was actually released
+            # Branch is semver, append 0s until length 4 to get the tag
+            parts = branch_name.split(".")
+            parts += ["0"] * (4 - len(parts))
+            branch_name = ".".join(parts)
+
         with console.status(
             f"[bold yellow]Cloning repository {git_url} branch {branch_name}...[/bold yellow]",
             spinner="dots",
