@@ -186,6 +186,11 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
     return request.search(
         req -> {
           try {
+            // Remove index information if we're searching a PIT, since
+            // OpenSearch refuses to process PIT searches on specific indices.
+            if (req.source() != null && req.source().pointInTimeBuilder() != null) {
+              req = new SearchRequest().source(req.source());
+            }
             return client.search(req, RequestOptions.DEFAULT);
           } catch (IOException e) {
             throw new IllegalStateException(
