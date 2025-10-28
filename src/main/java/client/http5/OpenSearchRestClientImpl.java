@@ -325,7 +325,8 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
     }
   }
 
-  // Pseduo-`@Override`: only applicable on versions 3.3 or newer, if we add `@Override` it breaks compilation on older versions
+  // Pseduo-`@Override`: only applicable on versions 3.3 or newer, if we add `@Override` it breaks
+  // compilation on older versions
   public void forceCleanup(OpenSearchRequest request) {
     if (request instanceof OpenSearchScrollRequest) {
       request.forceClean(

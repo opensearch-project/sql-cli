@@ -38,9 +38,6 @@ class SqlVersion:
         self.available_versions = self.get_all_versions()
         # Default version is the highest version number
         self.version = self.get_latest_version()
-        # Default to HTTP5 for version 3.x and above
-        # HTTP4 for older versions
-        self.use_http5 = self._should_use_http5(self.version)
 
     def get_all_versions(self):
         """
@@ -111,7 +108,6 @@ class SqlVersion:
             bool: True if version is valid, False otherwise
         """
         self.version = self._normalize_version(version)
-        self.use_http5 = self._should_use_http5(self.version)
 
         if self.version not in self.available_versions:
             console.print(
@@ -228,7 +224,6 @@ class SqlVersion:
                 return False
 
         self.version = self._extract_version_from_jar(jar_file)
-        self.use_http5 = self._should_use_http5(self.version)
 
         return self._build_sqlcli_jar(rebuild=rebuild, local_dir=local_dir)
 
@@ -249,23 +244,6 @@ class SqlVersion:
         while len(parts) < 4:
             parts.append("0")
         return ".".join(parts)
-
-    def _should_use_http5(self, version_str):
-        """
-        Determine if HTTP5 should be used based on version
-
-        Args:
-            version_str: Version string
-
-        Returns:
-            bool: True if HTTP5 should be used, False for HTTP4
-        """
-        try:
-            major_version = int(version_str.split(".")[0])
-            # Use HTTP5 for version 3.x and above
-            return major_version >= 3
-        except (ValueError, IndexError):
-            return True
 
     def _extract_version_from_jar(self, jar_file):
         """
