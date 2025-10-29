@@ -10,7 +10,7 @@ public class GatewayTest {
   Gateway getGateway() {
     Gateway gateway = new Gateway();
     boolean connectionInitialized =
-        gateway.initializeConnection("localhost", 9200, "http", "", "", true);
+        gateway.initializeConnection("localhost", 9200, "http", null, null, false);
     if (!connectionInitialized) {
       throw new AssertionError("failed to initialize connection");
     }
@@ -18,7 +18,7 @@ public class GatewayTest {
   }
 
   void assertSuccessfulPPL(Gateway gateway, String ppl) {
-    String result = gateway.queryExecution(ppl, true, false, "jdbc");
+    String result = gateway.queryExecution(ppl, true, false, "table");
 
     if (result.contains("Exception")) {
       throw new AssertionFailedError(
@@ -29,12 +29,12 @@ public class GatewayTest {
   @Test
   void pplSelectAll() {
     Gateway gateway = getGateway();
-    assertSuccessfulPPL(gateway, "source = accounts");
+    assertSuccessfulPPL(gateway, "source = accounts;");
   }
 
   @Test
   void pplSelectHead() {
     Gateway gateway = getGateway();
-    assertSuccessfulPPL(gateway, "source = accounts | head 10");
+    assertSuccessfulPPL(gateway, "source = accounts | head 10;");
   }
 }

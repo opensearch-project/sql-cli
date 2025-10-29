@@ -216,54 +216,6 @@ def createShadowJarTask(String taskName, String versionLabel, Configuration conf
     }
 }
 
-// Create a shadow jar task for local JAR files
-def createLocalShadowJarTask(String taskName, String versionLabel, String localJarDir) {
-    def localConfigName = "${versionLabel.replace('.', '_')}_local"
-    def localDependencyConfigName = "${localConfigName}_Dependency"
-
-    tasks.register(taskName, com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-        archiveBaseName.set("opensearchsqlcli-${versionLabel}")
-
-        // Include all dependencies
-        configurations = [
-            configurations.sharedDependency,
-            configurations[localConfigName],
-            configurations[localDependencyConfigName]
-        ]
-        
-        doFirst {
-            println "Including dependencies from sharedDependency:"
-            configurations.sharedDependency.each { file ->
-                println "  - ${file.name}"
-            }
-        }
-        
-        // Include the main source set output
-        from(sourceSets.main.output)
-        
-        // Include the appropriate HTTP client source set based on version
-        def httpClientInfo = project.ext.getHttpClientInfo()
-        from(httpClientInfo.sourceSet.output)
-        
-        // Include HTTP client dependencies
-        configurations += [httpClientInfo.dependencies]
-        
-        // Configure shadow jar settings
-        manifest {
-            attributes 'Main-Class': 'Gateway'
-        }
-        
-        // Exclude signature files to avoid conflicts
-        project.ext.metaInfExclusions.each { pattern ->
-            exclude pattern
-        }
-        
-        mergeServiceFiles()
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        zip64 = true
-    }
-}
-
 // Helper function to configure runtime configuration based on version
 ext.configureRuntimeConfiguration = { String version, String configName, String dependencyConfigName ->
     configurations[dependencyConfigName].extendsFrom(
@@ -377,10 +329,8 @@ tasks.addRule("Pattern: <version>: Creates a task for the specified version") { 
             def localConfigName = project.ext.createLocalConfigurations(version, localJarDir)
 
             // Configure implementation directly
-            def httpClientInfo = project.ext.getHttpClientInfo()
             configurations.implementation.extendsFrom = [
                 configurations.sharedDependency,
-                httpClientInfo.dependencies,
                 configurations[localConfigName]
             ] as Set
 
@@ -389,10 +339,8 @@ tasks.addRule("Pattern: <version>: Creates a task for the specified version") { 
             def configName = project.ext.createVersionConfigurations(version)
 
             // Configure implementation directly
-            def httpClientInfo = project.ext.getHttpClientInfo()
             configurations.implementation.extendsFrom = [
                 configurations.sharedDependency,
-                httpClientInfo.dependencies,
                 configurations[configName]
             ] as Set
 

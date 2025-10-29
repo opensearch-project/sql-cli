@@ -142,7 +142,7 @@ public class Config {
       // Check if config file exists
       File file = new File(CONFIG_FILE);
       if (!file.exists()) {
-        logger.info("Config file not found: " + CONFIG_FILE);
+        logger.info("Config file not found: {}", CONFIG_FILE);
         yamlConfig = new YAMLConfiguration();
         return;
       }
@@ -153,7 +153,7 @@ public class Config {
         yamlConfig.read(reader);
       }
     } catch (IOException | ConfigurationException e) {
-      logger.error("Error loading configuration: " + e.getMessage(), e);
+        logger.error("Error loading configuration: {}", e.getMessage(), e);
       yamlConfig = new YAMLConfiguration();
     }
   }
