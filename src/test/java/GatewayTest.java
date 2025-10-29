@@ -37,4 +37,10 @@ public class GatewayTest {
     Gateway gateway = getGateway();
     assertSuccessfulPPL(gateway, "source = accounts | head 10;");
   }
+
+  @Test
+  void pplSelectOffsetHead() {
+    Gateway gateway = getGateway();
+    assertSuccessfulPPL(gateway, "source = accounts | head 200 from 9900;");
+  }
 }
