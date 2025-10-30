@@ -29,7 +29,7 @@ repositories {
 ext {
     // ALSO CHANGE sql_version.py's version
     // TODO: single source of truth
-    sqlPluginVersion = "3.3.0"
+    sqlPluginVersion = "3.4.0"
     opensearchClientVersion = '3.2.0'
 
     jvmArgs = [
@@ -42,6 +42,7 @@ ext {
 dependencies {
     // SQL deps
     implementation files('submodule/datasources-3.1.0.0-SNAPSHOT.jar')
+    implementation "org.opensearch.plugin:opensearch-sql-plugin:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
     implementation "org.opensearch.query:unified-query-common:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
     implementation "org.opensearch.query:unified-query-core:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
     implementation "org.opensearch.query:unified-query-opensearch:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
@@ -141,7 +142,6 @@ spotless {
 
 shadowJar {
     archiveBaseName.set('opensearchsqlcli')
-    archiveVersion.set('live')
 
     manifest {
         attributes 'Main-Class': 'Gateway'

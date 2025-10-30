@@ -218,7 +218,7 @@ class OpenSearchSqlCli:
                         f"[green]User:[/green] [dim white]{self.sql_connection.username}[/dim white]"
                     )
             console.print(
-                f"[green]SQL:[/green] [dim white]v{sql_version.version}[/dim white]"
+                f"[green]SQL:[/green] [dim white]{sql_version.version}[/dim white]"
             )
             console.print(
                 f"[green]Language:[/green] [dim white]{language.upper()}[/dim white]"

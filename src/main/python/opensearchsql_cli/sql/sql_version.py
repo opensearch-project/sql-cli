@@ -35,7 +35,7 @@ class SqlVersion:
         """
         Initialize the SQL Version manager
         """
-        self.version = "live"
+        self.version = "latest"
 
     def load_jar_path(self, rebuild=False):
         """
@@ -49,7 +49,7 @@ class SqlVersion:
 
     def _get_jar_path(self):
         return os.path.join(
-            PROJECT_ROOT, "build", "libs", f"opensearchsqlcli-live-all.jar"
+            PROJECT_ROOT, "build", "libs", f"opensearchsqlcli-all.jar"
         )
 
     def _build_sqlcli_jar(self, rebuild=False):
@@ -65,16 +65,7 @@ class SqlVersion:
         """
         jar_path = self._get_jar_path()
 
-        # Run ./gradlew clean if rebuild
-        if rebuild:
-            subprocess.run(
-                ["./gradlew", "clean"],
-                cwd=PROJECT_ROOT,
-                capture_output=True,
-                text=True,
-            )
-
-        if not os.path.exists(jar_path):
+        if rebuild or not os.path.exists(jar_path):
             cmd_args = ["./gradlew", "shadowJar"]
 
             with console.status(
