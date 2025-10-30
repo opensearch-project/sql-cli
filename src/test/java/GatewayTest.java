@@ -19,6 +19,7 @@ public class GatewayTest {
 
   void assertSuccessfulPPL(Gateway gateway, String ppl) {
     String result = gateway.queryExecution(ppl, true, false, "table");
+    System.out.println("Result is: " + result);
 
     if (result.contains("Exception")) {
       throw new AssertionFailedError(
@@ -42,5 +43,20 @@ public class GatewayTest {
   void pplSelectOffsetHead() {
     Gateway gateway = getGateway();
     assertSuccessfulPPL(gateway, "source = accounts | head 200 from 9900;");
+  }
+
+  @Test
+  void pplNumericStats() {
+    Gateway gateway = getGateway();
+    assertSuccessfulPPL(
+        gateway,
+        "source = accounts | stats max(balance) as max_balance, avg(balance) as avg_balance by"
+            + " city");
+  }
+
+  @Test
+  void pplValuesStats() {
+    Gateway gateway = getGateway();
+    assertSuccessfulPPL(gateway, "source = accounts | stats values(email) as emails");
   }
 }

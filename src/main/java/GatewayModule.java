@@ -63,12 +63,7 @@ public class GatewayModule extends AbstractModule {
   private final String awsRegion;
 
   public GatewayModule(
-      String host,
-      int port,
-      String protocol,
-      String username,
-      String password,
-      boolean ignoreSSL) {
+      String host, int port, String protocol, String username, String password, boolean ignoreSSL) {
     this.host = host;
     this.port = port;
     this.protocol = protocol;

@@ -116,7 +116,7 @@ class SqlLibraryManager:
             self.logger.setLevel(logging.INFO)
 
             # Create file handler
-            file_handler = logging.FileHandler(log_file, mode="a")
+            file_handler = logging.FileHandler(log_file, mode="w")
             file_handler.setFormatter(
                 logging.Formatter("%(asctime)s %(message)s", datefmt="%H:%M:%S")
             )
@@ -190,7 +190,7 @@ class SqlLibraryManager:
             if not self._setup_logging():
                 return False
 
-            jar_path = sql_version.get_jar_path()
+            jar_path = sql_version.load_jar_path()
 
             # Add logback configuration
             self.logger.info(f"Using logback config: {LOGBACK_CONFIG}")

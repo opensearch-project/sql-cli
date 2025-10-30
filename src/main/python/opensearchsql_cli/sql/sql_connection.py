@@ -212,7 +212,7 @@ class SqlConnection:
             # Start the SQL Library server if it's not already running
             if not sql_library_manager.started:
                 if not sql_library_manager.start():
-                    console.print("[bold red]Failed to connect SQL Library[/bold red]")
+                    console.print("[bold red]Failed to connect to the SQL gateway. See logs/sql_library.log for details.[/bold red]")
                     return False
 
             # Connect to the SQL Library

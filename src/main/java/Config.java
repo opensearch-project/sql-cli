@@ -153,7 +153,7 @@ public class Config {
         yamlConfig.read(reader);
       }
     } catch (IOException | ConfigurationException e) {
-        logger.error("Error loading configuration: {}", e.getMessage(), e);
+      logger.error("Error loading configuration: {}", e.getMessage(), e);
       yamlConfig = new YAMLConfiguration();
     }
   }

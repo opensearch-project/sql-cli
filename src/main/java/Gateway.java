@@ -45,12 +45,7 @@ public class Gateway {
   }
 
   public boolean initializeConnection(
-      String host,
-      int port,
-      String protocol,
-      String username,
-      String password,
-      boolean ignoreSSL) {
+      String host, int port, String protocol, String username, String password, boolean ignoreSSL) {
 
     try {
 

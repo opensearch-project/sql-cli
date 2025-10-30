@@ -144,7 +144,7 @@ class TestSqlVersion:
         Test getting JAR path
         """
         # Setup mock
-        expected_path = "/mock/project_root/build/libs/opensearchsqlcli-3.4.0.0.jar"
+        expected_path = "/mock/project_root/build/libs/opensearchsqlcli-live.jar"
         mock_join.return_value = expected_path
 
         # Create version manager and get JAR path
@@ -154,5 +154,5 @@ class TestSqlVersion:
         # Assertions
         assert path == expected_path
         mock_join.assert_called_with(
-            "/mock/project_root", "build", "libs", "opensearchsqlcli-3.4.0.0.jar"
+            "/mock/project_root", "build", "libs", "opensearchsqlcli-live.jar"
         )
