@@ -67,7 +67,10 @@ public class Config {
             Settings.Key.CALCITE_FALLBACK_ALLOWED, true,
             Settings.Key.CALCITE_PUSHDOWN_ENABLED, true,
             Settings.Key.CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR, 1.0,
-            Settings.Key.SQL_CURSOR_KEEP_ALIVE, TimeValue.timeValueMinutes(1));
+            Settings.Key.SQL_CURSOR_KEEP_ALIVE, TimeValue.timeValueMinutes(1),
+            Settings.Key.PPL_REX_MAX_MATCH_LIMIT, 10,
+                Settings.Key.PPL_JOIN_SUBSEARCH_MAXOUT, 50000
+        );
 
     try {
       // Load the YAML configuration
