@@ -14,6 +14,8 @@ import query.execution.Execution;
 import query.execution.PplExecution;
 import query.execution.SqlExecution;
 
+import java.util.Arrays;
+
 /** Main class for executing queries using the factory and strategy patterns. */
 public class QueryExecution {
   private static final Logger logger = LoggerFactory.getLogger(QueryExecution.class);
@@ -51,7 +53,7 @@ public class QueryExecution {
 
       return execution.execute(query, isExplain, format);
     } catch (Exception e) {
-      logger.error("Execution Error: ", e);
+      logger.error("Execution Error: {}", Arrays.stream(e.getStackTrace()).toList());
       return e.toString();
     }
   }

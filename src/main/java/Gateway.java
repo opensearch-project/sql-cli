@@ -83,7 +83,6 @@ public class Gateway {
 
       server.start();
       logger.info("Gateway Server Started on port {}", gatewayPort);
-
     } catch (Exception e) {
       logger.error("Failed to start Gateway Server", e);
     }

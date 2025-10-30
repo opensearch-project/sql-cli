@@ -91,9 +91,9 @@ public class PplExecution implements Execution {
       }
 
       @Override
-      public void onFailure(Exception e) {
-        logger.error("Execution Error: " + e);
-        errorRef.set(e);
+      public void onFailure(Exception ex) {
+        logger.error("Execution Error: {}", ex.getMessage(), ex);
+        errorRef.set(ex);
         latch.countDown();
       }
     };
