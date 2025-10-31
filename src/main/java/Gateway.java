@@ -21,13 +21,13 @@ public class Gateway {
   private SQLService sqlService;
   private QueryExecution queryExecution;
 
-  public boolean initializeAwsConnection(String hostPort, boolean useHttp5) {
+  public boolean initializeAwsConnection(String hostPort) {
     // hostPort is the AWS OpenSearch endpoint (without https://)
     Region region = new DefaultAwsRegionProviderChain().getRegion();
 
     try {
 
-      Injector injector = Guice.createInjector(new GatewayModule(hostPort, useHttp5));
+      Injector injector = Guice.createInjector(new GatewayModule(hostPort));
 
       // Initialize services
       this.pplService = injector.getInstance(PPLService.class);
@@ -35,7 +35,6 @@ public class Gateway {
       this.queryExecution = injector.getInstance(QueryExecution.class);
 
       logger.info("Initialized AWS connection to OpenSearch at {} in region {}.", hostPort, region);
-      logger.info("Using HTTP{} for the connection.", (useHttp5 ? "5" : "4"));
 
       return true;
 
@@ -51,14 +50,13 @@ public class Gateway {
       String protocol,
       String username,
       String password,
-      boolean ignoreSSL,
-      boolean useHttp5) {
+      boolean ignoreSSL) {
 
     try {
 
       Injector injector =
           Guice.createInjector(
-              new GatewayModule(host, port, protocol, username, password, ignoreSSL, useHttp5));
+              new GatewayModule(host, port, protocol, username, password, ignoreSSL));
 
       // Initialize services
       this.pplService = injector.getInstance(PPLService.class);
@@ -66,7 +64,6 @@ public class Gateway {
       this.queryExecution = injector.getInstance(QueryExecution.class);
 
       logger.info("Initialized connection to OpenSearch at {}://{}:{}.", protocol, host, port);
-      logger.info("Using HTTP{} for the connection.", (useHttp5 ? "5" : "4"));
 
       return true;
 

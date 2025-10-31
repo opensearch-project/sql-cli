@@ -51,11 +51,6 @@ ext.getLocalJarDir = { ->
     return project.hasProperty('localJarDir') ? project.getProperty('localJarDir') : null
 }
 
-ext.updateIsV3orAbove = { String version ->
-    project.ext.isV3orAbove = version?.startsWith("3") ?: false
-    return project.ext.isV3orAbove
-}
-
 ext.getOpenSearchClientVersion = { String version ->
     def parts = version.split("\\.")
     // 2.19.1 -> 2.19.0 format for OpenSearch client dependencies
@@ -63,23 +58,6 @@ ext.getOpenSearchClientVersion = { String version ->
         return "${parts[0]}.${parts[1]}.0"
     }
     return version
-}
-
-// Helper function to determine which HTTP client to use based on version
-ext.getHttpClientInfo = { ->
-    def result = [:]
-    
-    if (project.ext.isV3orAbove) {
-        result.clientName = "HTTP5"
-        result.sourceSet = sourceSets.http5
-        result.dependencies = configurations.http5Dependency
-    } else {
-        result.clientName = "HTTP4"
-        result.sourceSet = sourceSets.http4
-        result.dependencies = configurations.http4Dependency
-    }
-    
-    return result
 }
 
 
@@ -93,13 +71,6 @@ ext {
     // TODO will need to see why using datasources on Maven fails
     // but using local jar file works
     mavenSubmodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol']
-
-    // Global variable to determine if version is 3 or above
-    // Initialize with default value, will be updated when needed
-    isV3orAbove = false
-    
-    // Update isV3orAbove based on current version
-    updateIsV3orAbove(getEffectiveVersion())
 
     // Common dependencies shared across all versions
     sharedDeps = [
@@ -132,22 +103,12 @@ ext {
         // Guice, dependency injection
         'com.google.inject:guice:7.0.0',
         // Py4J
-        'net.sf.py4j:py4j:0.10.9.9'
-    ]
-    
-    // HTTP5 dependencies for v3 and above
-    http5Deps = [
+        'net.sf.py4j:py4j:0.10.9.9',
+        // HTTP5
         'org.apache.httpcomponents.core5:httpcore5:5.2',
         'org.apache.httpcomponents.client5:httpclient5:5.2.1'
     ]
-    
-    // HTTP4 dependencies for below v3
-    http4Deps = [
-        'org.apache.httpcomponents:httpcore:4.4.16',
-        'org.apache.httpcomponents:httpclient:4.5.14',
-        'io.github.acm19:aws-request-signing-apache-interceptor:3.0.0'
-    ]
-        
+
     // OpenSearch client dependencies
     opensearchClientDeps = [
         'opensearch-rest-high-level-client',
@@ -172,8 +133,6 @@ ext {
 
 configurations {
     sharedDependency
-    http4Dependency
-    http5Dependency
 
     implementation {
         extendsFrom sharedDependency
@@ -185,28 +144,6 @@ sourceSets {
     main {
         java {
             srcDirs = ['src/main/java']
-            // Base source set excludes both HTTP client implementations
-            exclude 'client/http4/**', 'client/http5/**'
-        }
-    }
-    
-    http4 {
-        java {
-            srcDirs = ['src/main/java']
-            // Include only common files and HTTP4 files
-            include 'client/http4/**'
-            include '**/*.java'
-            exclude 'client/http5/**'
-        }
-    }
-    
-    http5 {
-        java {
-            srcDirs = ['src/main/java']
-            // Include only common files and HTTP5 files
-            include 'client/http5/**'
-            include '**/*.java'
-            exclude 'client/http4/**'
         }
     }
 }
@@ -215,57 +152,23 @@ dependencies {
     sharedDeps.each { d ->
         sharedDependency d
     }
-    
-    http4Deps.each { d ->
-        http4Dependency d
-    }
-    
-    http5Deps.each { d ->
-        http5Dependency d
-    }
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.14.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:5.14.0"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 jar {
     archiveBaseName.set("opensearchsql")
 }
 
+test {
+    useJUnitPlatform()
+}
+
 // Configure compile tasks for all source sets
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += project.ext.jvmArgs
-}
-
-// Configure HTTP4 and HTTP5 compile tasks
-tasks.named('compileHttp4Java') {
-    classpath = configurations.http4Dependency + configurations.sharedDependency + sourceSets.main.compileClasspath
-    // Skip this task when using v3 or above
-    onlyIf { 
-            task -> 
-                def result = !project.ext.isV3orAbove
-                if (result) {
-                    println "Using HTTP4 client for version ${project.ext.getEffectiveVersion()}"
-                }
-                return result
-        }
-}
-
-tasks.named('compileHttp5Java') {
-    classpath = configurations.http5Dependency + configurations.sharedDependency + sourceSets.main.compileClasspath
-    // Skip this task when using below v3
-    onlyIf { 
-            task -> 
-                def result = project.ext.isV3orAbove
-                if (result) {
-                    println "Using HTTP5 client for version ${project.ext.getEffectiveVersion()}"
-                }
-                return result
-        }
-}
-
-// Configure the classes task to depend on the appropriate compile task
-tasks.named('classes').configure {
-    dependsOn {
-        project.ext.isV3orAbove ? ['compileHttp5Java'] : ['compileHttp4Java']
-    }
 }
 
 applicationDefaultJvmArgs = project.ext.jvmArgs
@@ -296,59 +199,7 @@ def createShadowJarTask(String taskName, String versionLabel, Configuration conf
         
         // Include the main source set output
         from(sourceSets.main.output)
-        
-        // Include the appropriate HTTP client source set based on version
-        def httpClientInfo = project.ext.getHttpClientInfo()
-        from(httpClientInfo.sourceSet.output)
-        
-        // Configure shadow jar settings
-        manifest {
-            attributes 'Main-Class': 'Gateway'
-        }
-        
-        // Exclude signature files to avoid conflicts
-        project.ext.metaInfExclusions.each { pattern ->
-            exclude pattern
-        }
-        
-        mergeServiceFiles()
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        zip64 = true
-    }
-}
 
-// Create a shadow jar task for local JAR files
-def createLocalShadowJarTask(String taskName, String versionLabel, String localJarDir) {
-    def localConfigName = "${versionLabel.replace('.', '_')}_local"
-    def localDependencyConfigName = "${localConfigName}_Dependency"
-
-    tasks.register(taskName, com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-        archiveBaseName.set("opensearchsqlcli-${versionLabel}")
-
-        // Include all dependencies
-        configurations = [
-            configurations.sharedDependency,
-            configurations[localConfigName],
-            configurations[localDependencyConfigName]
-        ]
-        
-        doFirst {
-            println "Including dependencies from sharedDependency:"
-            configurations.sharedDependency.each { file ->
-                println "  - ${file.name}"
-            }
-        }
-        
-        // Include the main source set output
-        from(sourceSets.main.output)
-        
-        // Include the appropriate HTTP client source set based on version
-        def httpClientInfo = project.ext.getHttpClientInfo()
-        from(httpClientInfo.sourceSet.output)
-        
-        // Include HTTP client dependencies
-        configurations += [httpClientInfo.dependencies]
-        
         // Configure shadow jar settings
         manifest {
             attributes 'Main-Class': 'Gateway'
@@ -367,15 +218,10 @@ def createLocalShadowJarTask(String taskName, String versionLabel, String localJ
 
 // Helper function to configure runtime configuration based on version
 ext.configureRuntimeConfiguration = { String version, String configName, String dependencyConfigName ->
-    def httpClientInfo = project.ext.getHttpClientInfo()
-    
     configurations[dependencyConfigName].extendsFrom(
-        configurations.sharedDependency, 
-        httpClientInfo.dependencies,
+        configurations.sharedDependency,
         configurations[configName]
     )
-    
-    println "Version ${version}: Using ${httpClientInfo.clientName} dependencies and source files"
 }
 
 ext.createVersionConfigurations = { String version ->
@@ -385,10 +231,7 @@ ext.createVersionConfigurations = { String version ->
     if (!configurations.findByName(configName)) {
         configurations.create(configName)
         configurations.create(dependencyConfigName)
-        
-        // Update the global isV3orAbove variable
-        project.ext.updateIsV3orAbove(version)
-        
+
         // Configure runtime configuration based on version
         configureRuntimeConfiguration(version, configName, dependencyConfigName)
 
@@ -427,10 +270,7 @@ ext.createLocalConfigurations = { String version, String localJarDir ->
     if (!configurations.findByName(configName)) {
         configurations.create(configName)
         configurations.create(dependencyConfigName)
-        
-        // Update the global isV3orAbove variable
-        project.ext.updateIsV3orAbove(version)
-        
+
         // Configure runtime configuration based on version
         configureRuntimeConfiguration(version, configName, dependencyConfigName)
         
@@ -472,42 +312,38 @@ ext.createLocalConfigurations = { String version, String localJarDir ->
 tasks.addRule("Pattern: <version>: Creates a task for the specified version") { String taskName ->
     if (taskName.count("_") >= 1 && taskName.matches("[0-9].*")) {
         def version = taskName.replace('_', '.')
-        
+
         // Check if it's a local JAR task
         if (project.ext.isLocalJarTask(taskName)) {
             // Extract the version without the _local suffix
             version = taskName.substring(0, taskName.lastIndexOf("_local")).replace('_', '.')
-            
+
             // Get the local JAR directory
             def localJarDir = project.ext.getLocalJarDir()
-            
+
             if (localJarDir == null) {
                 throw new GradleException("Local JAR directory not specified. Use -PlocalJarDir=/path/to/local/jar")
             }
-            
+
             // Create configurations for local JAR files
             def localConfigName = project.ext.createLocalConfigurations(version, localJarDir)
-            
+
             // Configure implementation directly
-            def httpClientInfo = project.ext.getHttpClientInfo()
             configurations.implementation.extendsFrom = [
-                configurations.sharedDependency, 
-                httpClientInfo.dependencies, 
+                configurations.sharedDependency,
                 configurations[localConfigName]
             ] as Set
-            
+
             println "Version ${version}: Set implementation configuration for local JAR using directory ${localJarDir}"
         } else {
             def configName = project.ext.createVersionConfigurations(version)
-            
+
             // Configure implementation directly
-            def httpClientInfo = project.ext.getHttpClientInfo()
             configurations.implementation.extendsFrom = [
-                configurations.sharedDependency, 
-                httpClientInfo.dependencies, 
+                configurations.sharedDependency,
                 configurations[configName]
             ] as Set
-            
+
             println "Version ${version}: Set implementation configuration"
         }
     }
@@ -525,12 +361,9 @@ afterEvaluate {
     if (effectiveVersion == project.ext.defaultVersion) {
 
         def configName = project.ext.createVersionConfigurations(effectiveVersion)
-        def httpClientInfo = project.ext.getHttpClientInfo()
         configurations.implementation.extendsFrom = [
-            configurations.sharedDependency, 
-            httpClientInfo.dependencies, 
+            configurations.sharedDependency,
             configurations[configName]
         ] as Set
-        println "Default build: Set up version ${effectiveVersion} with ${httpClientInfo.clientName} client"
     }
 }

@@ -5,7 +5,7 @@
 
 package client;
 
-import java.lang.reflect.Method;
+import client.http5.Http5Client;
 import org.opensearch.sql.opensearch.client.OpenSearchClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,6 @@ public class ClientBuilder {
   private boolean ignoreSSL;
   private boolean useAwsAuth;
   private String awsEndpoint;
-  private boolean useHttp5;
 
   /**
    * Sets the host for the client.
@@ -107,17 +106,6 @@ public class ClientBuilder {
   }
 
   /**
-   * Sets whether to use HTTP5 client implementation.
-   *
-   * @param useHttp5 true to use HTTP5, false to use HTTP4
-   * @return this builder instance
-   */
-  public ClientBuilder withHttp5(boolean useHttp5) {
-    this.useHttp5 = useHttp5;
-    return this;
-  }
-
-  /**
    * Builds and returns an OpenSearchClient instance based on the configured parameters. Uses
    * reflection to create the appropriate client (HTTP4 or HTTP5) based on configuration.
    *
@@ -126,29 +114,14 @@ public class ClientBuilder {
    */
   public OpenSearchClient build() {
     try {
-      // Determine which client class to use based on useHttp5 flag
-      String clientClassName = useHttp5 ? "client.http5.Http5Client" : "client.http4.Http4Client";
-      Class<?> clientClass = Class.forName(clientClassName);
-
       if (useAwsAuth) {
         // Call createAwsClient(awsEndpoint)
         logger.info("Building AWS client with endpoint: {}", awsEndpoint);
-        Method method = clientClass.getMethod("createAwsClient", String.class);
-        return (OpenSearchClient) method.invoke(null, awsEndpoint);
+        return Http5Client.createAwsClient(awsEndpoint);
       } else {
         // Call createClient(host, port, protocol, username, password, ignoreSSL)
         logger.info("Building {} client for {}:{}", protocol.toUpperCase(), host, port);
-        Method method =
-            clientClass.getMethod(
-                "createClient",
-                String.class,
-                int.class,
-                String.class,
-                String.class,
-                String.class,
-                boolean.class);
-        return (OpenSearchClient)
-            method.invoke(null, host, port, protocol, username, password, ignoreSSL);
+        return Http5Client.createClient(host, port, protocol, username, password, ignoreSSL);
       }
     } catch (Exception e) {
       throw new RuntimeException("Failed to create OpenSearchClient: " + e.getMessage(), e);

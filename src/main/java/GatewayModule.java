@@ -61,7 +61,6 @@ public class GatewayModule extends AbstractModule {
   private final boolean useAwsAuth;
   private final String awsEndpoint;
   private final String awsRegion;
-  private final boolean useHttp5;
 
   public GatewayModule(
       String host,
@@ -69,8 +68,7 @@ public class GatewayModule extends AbstractModule {
       String protocol,
       String username,
       String password,
-      boolean ignoreSSL,
-      boolean useHttp5) {
+      boolean ignoreSSL) {
     this.host = host;
     this.port = port;
     this.protocol = protocol;
@@ -80,10 +78,9 @@ public class GatewayModule extends AbstractModule {
     this.useAwsAuth = false;
     this.awsEndpoint = null;
     this.awsRegion = null;
-    this.useHttp5 = useHttp5;
   }
 
-  public GatewayModule(String awsEndpoint, boolean useHttp5) {
+  public GatewayModule(String awsEndpoint) {
     this.host = null;
     this.port = 0;
     this.protocol = null;
@@ -93,7 +90,6 @@ public class GatewayModule extends AbstractModule {
     this.useAwsAuth = true;
     this.awsEndpoint = awsEndpoint;
     this.awsRegion = null;
-    this.useHttp5 = useHttp5;
   }
 
   @Override
@@ -103,7 +99,7 @@ public class GatewayModule extends AbstractModule {
   public OpenSearchClient openSearchClient() {
     try {
       // Use the ClientBuilder to create the appropriate client
-      ClientBuilder builder = new client.ClientBuilder().withHttp5(useHttp5);
+      ClientBuilder builder = new client.ClientBuilder();
 
       if (useAwsAuth) {
         // Configure AWS authentication
