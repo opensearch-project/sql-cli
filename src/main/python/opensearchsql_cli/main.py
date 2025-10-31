@@ -107,39 +107,6 @@ class OpenSearchSqlCli:
                     "CSV",
                 ],
             ),
-            version: str = typer.Option(
-                None,
-                "--version",
-                help="Set OpenSearch SQL plug-in version: 3.1, 2.19",
-                autocompletion=lambda ctx, incomplete: [
-                    # TODO this shouldn't be hardcoded, find a dynamic release source
-                    "3.3",
-                    "3.1",
-                    "2.19",
-                ],
-            ),
-            local_dir: str = typer.Option(
-                None,
-                "--local",
-                help="Use a local directory containing the SQL plugin JAR",
-            ),
-            remote: str = typer.Option(
-                None,
-                "--remote",
-                help='Clone from a git repository: --remote "https://github.com/opensearch-project/sql.git"',
-            ),
-            branch: str = typer.Option(
-                None,
-                "--branch",
-                "-b",
-                help='Branch name to clone (defaults to config value or "main")',
-            ),
-            remote_output: str = typer.Option(
-                None,
-                "--output",
-                "-o",
-                help="Custom output directory for cloned repository (used with --remote)",
-            ),
             rebuild: bool = typer.Option(
                 False,
                 "--rebuild",
@@ -168,65 +135,7 @@ class OpenSearchSqlCli:
                 return
 
             print("")
-            # Version selection logic with priority
-            # Command arg has priority over config then default
-            version_to_use = version
-            local_dir_to_use = local_dir
-            remote_to_use = remote
-
-            # If command line options not provided, try config file
-            if not (version_to_use or local_dir_to_use or remote_to_use):
-                version_to_use = config_manager.get("SqlVersion", "version", "")
-                local_dir_to_use = config_manager.get("SqlVersion", "local", "")
-                remote_to_use = config_manager.get("SqlVersion", "remote", "")
-
-            # Process based on which option is available
-            # --version > --local > --remote priority
-            if version_to_use:
-                # Version provided
-                success = sql_version.set_version(
-                    version=version_to_use, rebuild=rebuild
-                )
-                if not success:
-                    return
-            elif local_dir_to_use:
-                # Local directory provided
-                success = sql_version.set_local_version(
-                    local_dir_to_use, rebuild=rebuild
-                )
-                if not success:
-                    return
-            elif remote_to_use:
-                # Remote git info provided
-                git_url = remote_to_use
-
-                # Get branch name from config if not provided via command line
-                if branch is None:
-                    branch_name = config_manager.get(
-                        "SqlVersion", "branch_name", "main"
-                    )
-                else:
-                    branch_name = branch
-
-                # Get remote_output from config if not provided via command line
-                if remote_output is None:
-                    remote_output = config_manager.get(
-                        "SqlVersion", "remote_output", ""
-                    )
-
-                success = sql_version.set_remote_version(
-                    branch_name,
-                    git_url,
-                    rebuild=rebuild,
-                    remote_output=remote_output,
-                )
-                if not success:
-                    return
-            else:
-                # Use the default latest version if no options provided
-                success = sql_version.set_version(sql_version.version, rebuild)
-                if not success:
-                    return
+            sql_version.load_jar_path(rebuild)
 
             # Get defaults from config if not provided
             if language is None:
@@ -309,7 +218,7 @@ class OpenSearchSqlCli:
                         f"[green]User:[/green] [dim white]{self.sql_connection.username}[/dim white]"
                     )
             console.print(
-                f"[green]SQL:[/green] [dim white]v{sql_version.version}[/dim white]"
+                f"[green]SQL:[/green] [dim white]{sql_version.version}[/dim white]"
             )
             console.print(
                 f"[green]Language:[/green] [dim white]{language.upper()}[/dim white]"

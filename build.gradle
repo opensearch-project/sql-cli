@@ -6,6 +6,9 @@ plugins {
     id 'com.diffplug.spotless' version '7.1.0'
 }
 
+import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
+import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
@@ -26,109 +29,56 @@ repositories {
     }
 }
 
-// Helper function for version detection
-ext.getEffectiveVersion = { ->
-    // Look for task names with version format (e.g., 3_1_0_0 or 3_x)
-    def taskName = gradle.startParameter.taskNames.find { it.count("_") >= 1 && it.matches("[0-9].*") }
-    if (taskName != null) {
-        // Check if it's a local version task (ends with _local)
-        if (taskName.endsWith("_local")) {
-            return taskName.substring(0, taskName.lastIndexOf("_local")).replace('_', '.')
-        }
-        return taskName.replace('_', '.')
-    }
-    // Use default version when no version is specified
-    return project.ext.defaultVersion
-}
-
-// Helper function to check if a task is for local JAR
-ext.isLocalJarTask = { String taskName ->
-    return taskName.endsWith("_local")
-}
-
-// Helper function to get local JAR directory
-ext.getLocalJarDir = { ->
-    return project.hasProperty('localJarDir') ? project.getProperty('localJarDir') : null
-}
-
-ext.getOpenSearchClientVersion = { String version ->
-    def parts = version.split("\\.")
-    // 2.19.1 -> 2.19.0 format for OpenSearch client dependencies
-    if (parts.length >= 3) {
-        return "${parts[0]}.${parts[1]}.0"
-    }
-    return version
-}
-
-
 ext {
-    // Default version to use when no specific version is specified
-    // TODO don't hard-code this
-    defaultVersion = "3.3.0.0"
-    
-    submodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol', 'datasources']
+    // ALSO CHANGE sql_version.py's version
+    // TODO: single source of truth
+    sqlPluginVersion = "3.3.0"
+    opensearchClientVersion = '3.2.0'
+}
 
-    // TODO will need to see why using datasources on Maven fails
-    // but using local jar file works
-    mavenSubmodules = ['common', 'core', 'opensearch', 'ppl', 'sql', 'protocol']
-
-    // Common dependencies shared across all versions
-    sharedDeps = [
-        // OpenSearch
-        'org.apache.calcite:calcite-core:1.40.0',
-        'com.facebook.presto:presto-matching:0.293',
-        'org.antlr:antlr4-runtime:4.7.1',
-        'org.apache.commons:commons-lang3:3.17.0',
-        'org.reactivestreams:reactive-streams:1.0.4',
-        'com.google.guava:guava:32.4.8-jre',
-        // AWS SDK v2 
-        'software.amazon.awssdk:sdk-core:2.31.63',
-        'software.amazon.awssdk:auth:2.31.63',
-        'software.amazon.awssdk:regions:2.31.63',
-        'software.amazon.awssdk:apache-client:2.31.63',
-        'software.amazon.awssdk:sts:2.31.63',
-        'software.amazon.awssdk:aws-core:2.31.63',
-        // Logging 
-        'org.apache.logging.log4j:log4j-core:2.25.0',
-        'org.apache.logging.log4j:log4j-api:2.25.0',
-        // Logback
-        'ch.qos.logback:logback-classic:1.5.18',
-        // Apache Commons Configuration for YAML file parsing
-        'org.apache.commons:commons-configuration2:2.12.0',
-        'commons-beanutils:commons-beanutils:1.11.0',
-        'org.yaml:snakeyaml:2.2',
-        // JSON  
-        'org.json:json:20250517',
-        'com.google.code.gson:gson:2.13.1',
-        // Guice, dependency injection
-        'com.google.inject:guice:7.0.0',
-        // Py4J
-        'net.sf.py4j:py4j:0.10.9.9',
-        // HTTP5
-        'org.apache.httpcomponents.core5:httpcore5:5.2',
-        'org.apache.httpcomponents.client5:httpclient5:5.2.1'
-    ]
-
-    // OpenSearch client dependencies
-    opensearchClientDeps = [
-        'opensearch-rest-high-level-client',
-        'opensearch-rest-client',
-        'opensearch-java'
-    ]
-    
-    metaInfExclusions = [
-        'META-INF/*.SF',
-        'META-INF/*.DSA',
-        'META-INF/*.RSA',
-        'META-INF/*.EC',
-        'META-INF/MANIFEST.MF'
-    ]
-    
-    jvmArgs = [
-        '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
-        '--add-opens=java.base/java.io=ALL-UNNAMED',
-        '--add-opens=java.base/sun.misc=ALL-UNNAMED'
-    ]
+dependencies {
+    // SQL deps
+    implementation files('submodule/datasources-3.1.0.0-SNAPSHOT.jar')
+    implementation "org.opensearch.query:unified-query-common:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
+    implementation "org.opensearch.query:unified-query-core:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
+    implementation "org.opensearch.query:unified-query-opensearch:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
+    implementation "org.opensearch.query:unified-query-ppl:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
+    implementation "org.opensearch.query:unified-query-sql:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
+    implementation "org.opensearch.query:unified-query-protocol:${project.ext.sqlPluginVersion}.0-SNAPSHOT"
+    // Clients
+    implementation "org.opensearch.client:opensearch-rest-high-level-client:${opensearchClientVersion}"
+    implementation "org.opensearch.client:opensearch-rest-client:${opensearchClientVersion}"
+    implementation "org.opensearch.client:opensearch-java:${opensearchClientVersion}"
+    // AWS SDK v2
+    implementation 'software.amazon.awssdk:sdk-core:2.31.63'
+    implementation 'software.amazon.awssdk:auth:2.31.63'
+    implementation 'software.amazon.awssdk:regions:2.31.63'
+    implementation 'software.amazon.awssdk:apache-client:2.31.63'
+    implementation 'software.amazon.awssdk:sts:2.31.63'
+    implementation 'software.amazon.awssdk:aws-core:2.31.63'
+    // Logging
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.0'
+    implementation 'org.apache.logging.log4j:log4j-api:2.25.0'
+    // Logback
+    implementation 'ch.qos.logback:logback-classic:1.5.18'
+    // Apache Commons Configuration for YAML file parsing
+    implementation 'org.apache.commons:commons-configuration2:2.12.0'
+    implementation 'commons-beanutils:commons-beanutils:1.11.0'
+    implementation 'org.yaml:snakeyaml:2.2'
+    // JSON
+    implementation 'org.json:json:20250517'
+    implementation 'com.google.code.gson:gson:2.13.1'
+    // Guice, dependency injection
+    implementation 'com.google.inject:guice:7.0.0'
+    // Py4J
+    implementation 'net.sf.py4j:py4j:0.10.9.9'
+    // HTTP5
+    implementation 'org.apache.httpcomponents.core5:httpcore5:5.2'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.1'
+    // Testing
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.14.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:5.14.0"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 configurations {
@@ -148,16 +98,6 @@ sourceSets {
     }
 }
 
-dependencies {
-    sharedDeps.each { d ->
-        sharedDependency d
-    }
-
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.14.0"
-    testImplementation "org.junit.jupiter:junit-jupiter-engine:5.14.0"
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-}
-
 jar {
     archiveBaseName.set("opensearchsql")
 }
@@ -165,13 +105,6 @@ jar {
 test {
     useJUnitPlatform()
 }
-
-// Configure compile tasks for all source sets
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs += project.ext.jvmArgs
-}
-
-applicationDefaultJvmArgs = project.ext.jvmArgs
 
 spotless {
     java {
@@ -191,179 +124,23 @@ spotless {
     }
 }
 
-
-def createShadowJarTask(String taskName, String versionLabel, Configuration config) {
-    tasks.register(taskName, com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-        archiveBaseName.set("opensearchsqlcli-${versionLabel}")
-        configurations = [config]
-        
-        // Include the main source set output
-        from(sourceSets.main.output)
-
-        // Configure shadow jar settings
-        manifest {
-            attributes 'Main-Class': 'Gateway'
-        }
-        
-        // Exclude signature files to avoid conflicts
-        project.ext.metaInfExclusions.each { pattern ->
-            exclude pattern
-        }
-        
-        mergeServiceFiles()
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        zip64 = true
-    }
-}
-
-// Helper function to configure runtime configuration based on version
-ext.configureRuntimeConfiguration = { String version, String configName, String dependencyConfigName ->
-    configurations[dependencyConfigName].extendsFrom(
-        configurations.sharedDependency,
-        configurations[configName]
-    )
-}
-
-ext.createVersionConfigurations = { String version ->
-    def configName = "${version.replace('.', '_')}"
-    def dependencyConfigName = "${configName}_Dependency"
-
-    if (!configurations.findByName(configName)) {
-        configurations.create(configName)
-        configurations.create(dependencyConfigName)
-
-        // Configure runtime configuration based on version
-        configureRuntimeConfiguration(version, configName, dependencyConfigName)
-
-        // Add unified-query dependencies
-        project.ext.mavenSubmodules.each { name ->
-            dependencies.add(configName, "org.opensearch.query:unified-query-${name}:${version}-SNAPSHOT")
-        }
-        
-        // Add datasources JAR file
-        dependencies.add(configName, files('submodule/datasources-3.1.0.0-SNAPSHOT.jar'))
-
-        // Add OpenSearch client dependencies with appropriate version
-        // We don't need to strictly keep this in sync with the OpenSearch version
-        def clientVersion = '3.2.0'
-        
-        project.ext.opensearchClientDeps.each { dep ->
-            dependencies.add(configName, "org.opensearch.client:${dep}:${clientVersion}")
-        }
-        
-        println "Version ${version}: Using OpenSearch client version ${clientVersion}"
-
-        // Create shadow jar task for this version
-        createShadowJarTask(configName, version, configurations[dependencyConfigName])
-
-        println "Version ${version}: Created configuration and task name as ${configName}"
-    }
-
-    return configName
-}
-
-// Create configurations for local JAR files
-ext.createLocalConfigurations = { String version, String localJarDir ->
-    def configName = "${version.replace('.', '_')}_local"
-    def dependencyConfigName = "${configName}_Dependency"
-
-    if (!configurations.findByName(configName)) {
-        configurations.create(configName)
-        configurations.create(dependencyConfigName)
-
-        // Configure runtime configuration based on version
-        configureRuntimeConfiguration(version, configName, dependencyConfigName)
-        
-        // Add each submodule JAR file to the configuration
-        project.ext.submodules.each { submodule ->
-            def submoduleJarPath = "${localJarDir}/${submodule}/build/libs/${submodule}-${version}-SNAPSHOT.jar"
-            def submoduleJarFile = new File(submoduleJarPath)
-            if (submoduleJarFile.exists()) {
-                println "Adding submodule JAR file to configuration: ${submoduleJarPath}"
-                dependencies.add(configName, files(submoduleJarFile))
-            } else {
-                println "Warning: Submodule JAR file not found: ${submoduleJarPath}"
-            }
-        }
-        
-        // Add OpenSearch client dependencies with appropriate version
-        def clientVersion = '3.2.0'
-        
-        project.ext.opensearchClientDeps.each { dep ->
-            dependencies.add(configName, "org.opensearch.client:${dep}:${clientVersion}")
-        }
-        
-        // Add OpenSearch core dependency
-        String osVersion = version.tokenize('.').take(3).join('.')
-        dependencies.add(configName, "org.opensearch:opensearch:${osVersion}")
-        
-        println "Version ${version}: Using OpenSearch client version ${clientVersion}"
-        
-        // Create shadow jar task for this version
-        createShadowJarTask(configName, version, configurations[dependencyConfigName])
-        
-        println "Version ${version}: Created configuration and task name as ${configName}"
-    }
-    
-    return configName
-}
-
-// Use Gradle's task rules for dynamic task creation
-tasks.addRule("Pattern: <version>: Creates a task for the specified version") { String taskName ->
-    if (taskName.count("_") >= 1 && taskName.matches("[0-9].*")) {
-        def version = taskName.replace('_', '.')
-
-        // Check if it's a local JAR task
-        if (project.ext.isLocalJarTask(taskName)) {
-            // Extract the version without the _local suffix
-            version = taskName.substring(0, taskName.lastIndexOf("_local")).replace('_', '.')
-
-            // Get the local JAR directory
-            def localJarDir = project.ext.getLocalJarDir()
-
-            if (localJarDir == null) {
-                throw new GradleException("Local JAR directory not specified. Use -PlocalJarDir=/path/to/local/jar")
-            }
-
-            // Create configurations for local JAR files
-            def localConfigName = project.ext.createLocalConfigurations(version, localJarDir)
-
-            // Configure implementation directly
-            configurations.implementation.extendsFrom = [
-                configurations.sharedDependency,
-                configurations[localConfigName]
-            ] as Set
-
-            println "Version ${version}: Set implementation configuration for local JAR using directory ${localJarDir}"
-        } else {
-            def configName = project.ext.createVersionConfigurations(version)
-
-            // Configure implementation directly
-            configurations.implementation.extendsFrom = [
-                configurations.sharedDependency,
-                configurations[configName]
-            ] as Set
-
-            println "Version ${version}: Set implementation configuration"
-        }
-    }
-}
-
 shadowJar {
+    archiveBaseName.set('opensearchsqlcli')
+    duplicatesStrategy = DuplicatesStrategy.FAIL
     zip64 = true
-}
 
-// Set up default configuration when no specific version task is used
-// e.g. ./gradlew build so that IDE can recognize import classes
-afterEvaluate {
-    def effectiveVersion = project.ext.getEffectiveVersion()
-    
-    if (effectiveVersion == project.ext.defaultVersion) {
-
-        def configName = project.ext.createVersionConfigurations(effectiveVersion)
-        configurations.implementation.extendsFrom = [
-            configurations.sharedDependency,
-            configurations[configName]
-        ] as Set
+    manifest {
+        attributes 'Main-Class': 'Gateway'
+        attributes 'Multi-Release': 'true'
     }
+
+    from(sourceSets.main.output)
+    configurations = [project.configurations.runtimeClasspath]
+
+    transform(Log4j2PluginsCacheFileTransformer)
+    transform(ServiceFileTransformer)
+
+    mergeServiceFiles()
+    mergeServiceFiles('META-INF/services/')
+    mergeServiceFiles('META-INF/spring/')
 }

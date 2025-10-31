@@ -279,7 +279,7 @@ class InteractiveShell:
                 # Handle help command
                 if user_cmd in ["help", "-h", "--help"]:
                     console.print(
-                        f"[green]\nSQL:[/green] [dim white]v{sql_version.version}[/dim white]"
+                        f"[green]\nSQL:[/green] [dim white]{sql_version.version}[/dim white]"
                     )
                     console.print(
                         f"[green]Language:[/green] [dim white]{self.language_mode.upper()}[/dim white]"

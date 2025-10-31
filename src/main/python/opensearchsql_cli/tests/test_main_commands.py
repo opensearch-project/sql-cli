@@ -413,17 +413,6 @@ class TestCommands:
             (5, "JSON format", "format", "json", "JSON", False, True),
             (6, "CSV format", "format", "csv", "CSV", False, True),
             (7, "Format missing argument", "format", None, None, False, True),
-            # Version tests
-            (8, "Valid version", "version", "3.1", "v3.1", False, True),
-            (9, "Version with rebuild flag", "version", "3.1", "v3.1", True, True),
-            (10, "Invalid version", "version", "invalid", None, False, False),
-            (11, "Version missing argument", "version", None, None, False, True),
-            # Local directory tests
-            (12, "Local directory", "local", "/path/to/sql", "v3.1", False, True),
-            (13, "Local directory with rebuild", "local", "/path", "v3.1", True, True),
-            # Remote git tests
-            (14, "Remote", "remote", "url.git", "v3.1", False, True),
-            (15, "Remote with rebuild", "remote", "url.git", "v3.1", True, True),
         ],
     )
     @patch("opensearchsql_cli.main.sql_connection")

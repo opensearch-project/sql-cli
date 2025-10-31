@@ -61,13 +61,24 @@ public class Config {
     // Default settings to use if config file is not available
     Map<Settings.Key, Object> defaultSettings =
         Map.of(
-            Settings.Key.QUERY_SIZE_LIMIT, 200,
-            Settings.Key.FIELD_TYPE_TOLERANCE, true,
-            Settings.Key.CALCITE_ENGINE_ENABLED, true,
-            Settings.Key.CALCITE_FALLBACK_ALLOWED, true,
-            Settings.Key.CALCITE_PUSHDOWN_ENABLED, true,
-            Settings.Key.CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR, 1.0,
-            Settings.Key.SQL_CURSOR_KEEP_ALIVE, TimeValue.timeValueMinutes(1));
+            Settings.Key.QUERY_SIZE_LIMIT,
+            200,
+            Settings.Key.FIELD_TYPE_TOLERANCE,
+            true,
+            Settings.Key.CALCITE_ENGINE_ENABLED,
+            true,
+            Settings.Key.CALCITE_FALLBACK_ALLOWED,
+            true,
+            Settings.Key.CALCITE_PUSHDOWN_ENABLED,
+            true,
+            Settings.Key.CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR,
+            1.0,
+            Settings.Key.SQL_CURSOR_KEEP_ALIVE,
+            TimeValue.timeValueMinutes(1),
+            Settings.Key.PPL_REX_MAX_MATCH_LIMIT,
+            10,
+            Settings.Key.PPL_JOIN_SUBSEARCH_MAXOUT,
+            50000);
 
     try {
       // Load the YAML configuration
@@ -153,7 +164,7 @@ public class Config {
         yamlConfig.read(reader);
       }
     } catch (IOException | ConfigurationException e) {
-        logger.error("Error loading configuration: {}", e.getMessage(), e);
+      logger.error("Error loading configuration: {}", e.getMessage(), e);
       yamlConfig = new YAMLConfiguration();
     }
   }

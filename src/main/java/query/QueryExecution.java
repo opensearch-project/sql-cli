@@ -6,6 +6,7 @@
 package query;
 
 import com.google.inject.Inject;
+import java.util.Arrays;
 import org.opensearch.sql.ppl.PPLService;
 import org.opensearch.sql.sql.SQLService;
 import org.slf4j.Logger;
@@ -51,7 +52,7 @@ public class QueryExecution {
 
       return execution.execute(query, isExplain, format);
     } catch (Exception e) {
-      logger.error("Execution Error: ", e);
+      logger.error("Execution Error: {}", Arrays.stream(e.getStackTrace()).toList());
       return e.toString();
     }
   }
