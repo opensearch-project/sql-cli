@@ -6,6 +6,7 @@
 package query;
 
 import com.google.inject.Inject;
+import java.util.Arrays;
 import org.opensearch.sql.ppl.PPLService;
 import org.opensearch.sql.sql.SQLService;
 import org.slf4j.Logger;
@@ -13,8 +14,6 @@ import org.slf4j.LoggerFactory;
 import query.execution.Execution;
 import query.execution.PplExecution;
 import query.execution.SqlExecution;
-
-import java.util.Arrays;
 
 /** Main class for executing queries using the factory and strategy patterns. */
 public class QueryExecution {
