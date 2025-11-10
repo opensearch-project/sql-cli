@@ -1,9 +1,15 @@
-# Python formatter
+beautifulsoup4==4.13.4
 black==25.1.0
-# Tests
-pytest==8.4.1
+boto3==1.39.8
 mock==5.2.0
-vcrpy==7.0.0
+opensearch-py==3.0.0
+prompt_toolkit==3.0.51
+py4j==0.10.9.9
+pyfiglet==1.0.3
+pytest==8.4.1
+requests==2.32.4
+requests-aws4auth==1.3.1
 tox==4.28.4
 twine==6.1.0
 typer==0.16.0
+vcrpy==7.0.0
