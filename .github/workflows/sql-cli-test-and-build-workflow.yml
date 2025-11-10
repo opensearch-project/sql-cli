@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.12]
-        opensearch-version: [ latest ]
+        # Note: OpenSearch version is determined by the SQL repository clone
 
     steps:
       - name: Checkout SQL CLI
@@ -30,26 +30,29 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Set up Java 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           pip install setuptools wheel
-      
-        # tests are designed to run against http://localhost:9200, so we have to disable/remove security plugin
-      - name: Download and run OpenSearch
-        run: |
-          docker run -p 9200:9200 -e "discovery.type=single-node" -e "DISABLE_SECURITY_PLUGIN=true" --name test -d opensearchproject/opensearch:${{ matrix.opensearch-version }}
 
-      - name: Wait for cluster to start
-        uses: nick-fields/retry@v2
-        with:
-          timeout_seconds: 1
-          max_attempts: 30
-          command: curl -q localhost:9200
-
-      - name: Run Tox Testing
-        run: tox
+      - name: Run Gradle Build and Tests
+        run: ./gradlew build --info
+        # This command will:
+        # 1. Build Java components
+        # 2. Run Java unit tests
+        # 3. Clone/pull OpenSearch SQL repository to ./remote/sql
+        # 4. Start OpenSearch test cluster in background
+        # 5. Wait for cluster to be ready
+        # 6. Load test data from test_data/accounts.json
+        # 7. Run pytest tests
+        # 8. Automatically stop test cluster
 
       - name: Build Artifact
         run: python setup.py sdist bdist_wheel
@@ -65,8 +68,6 @@ jobs:
           name: opensearchsql
           path: opensearchsql-builds
 
-      - name: Clean up container
+      - name: Clean up test cluster
         if: always()
-        run: |
-          docker container stop test
-          docker container rm test
+        run: ./gradlew stopTestCluster

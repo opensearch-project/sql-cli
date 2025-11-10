@@ -361,6 +361,31 @@ For a list of all available configurations, see [config.yaml](src/main/python/op
 
 The CLI supports all types of query that OpenSearch PPL/SQL supports. Refer to [OpenSearch SQL basic usage documentation.](https://github.com/opensearch-project/sql/blob/main/docs/user/dql/basics.rst)
 
+## Development and Contributing
+
+If you're interested in contributing to this project or running tests:
+
+### Running Tests
+
+The project includes an automated build and test system:
+
+```bash
+# Run all tests with automated cluster setup
+./gradlew build
+```
+
+This command will:
+- Build the Java and Python components
+- Automatically clone/update the OpenSearch SQL repository to `./remote/sql`
+- Start a test OpenSearch cluster in the background
+- Load test data from `test_data/accounts.json`
+- Run all Java and Python tests
+- Clean up the test cluster automatically
+
+For detailed development instructions, see:
+- [Development Guide](development_guide.md) - Complete developer documentation
+- [Contributing Guide](CONTRIBUTING.md) - How to contribute to the project
+- [Test Suite Documentation](src/main/python/opensearchsql_cli/tests/README.md) - Testing details
 
 ## Code of Conduct
 

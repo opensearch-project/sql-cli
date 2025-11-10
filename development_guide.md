@@ -193,13 +193,95 @@ The OpenSearch SQL CLI follows this execution flow when processing queries:
    - HTTP4 or HTTP5 client is used based on OpenSearch version
 
 ## Testing
-- Prerequisites
-    - Build the application
-    - Start a local OpenSearch instance.
-- Pytest
-    - `pip install -r requirements-dev.txt` Install test frameworks including Pytest and mock.
-    - `cd` into `src/main/python/opensearchsql_cli/tests` and run `pytest`
-- Refer to [README.md](src/main/python/opensearchsql_cli/tests/README.md) for manual test guidance.
+
+### Automated Testing with Gradle
+
+The project includes an automated build and test system that handles setting up a test cluster, loading test data, and running all tests.
+
+#### Running All Tests
+
+```bash
+# Run the complete test suite (Java + Python)
+./gradlew build
+```
+
+This single command will:
+1. Build the Java application
+2. Run Java unit tests
+3. Clone/pull the OpenSearch SQL repository to `./remote/sql`
+4. Start an OpenSearch test cluster in the background
+5. Wait for the cluster to be ready
+6. Load test data from `test_data/accounts.json`
+7. Run all pytest tests
+8. Automatically stop the test cluster when done
+
+#### Available Gradle Tasks
+
+The build system provides several tasks for managing the test cluster:
+
+| Task | Description |
+|------|-------------|
+| `./gradlew cloneOrPullSqlRepo` | Clone or update the SQL repository in `./remote/sql` |
+| `./gradlew startTestCluster` | Start the OpenSearch cluster in background |
+| `./gradlew waitForCluster` | Wait for the cluster to be ready (polls `localhost:9200`) |
+| `./gradlew loadTestData` | Load `test_data/accounts.json` into the `accounts` index |
+| `./gradlew pytest` | Run all Python tests (automatically sets up cluster first) |
+| `./gradlew stopTestCluster` | Stop the running test cluster |
+
+#### Test Cluster Management
+
+The test cluster is automatically managed:
+- **PID Tracking**: Cluster process ID is stored in `build/cluster.pid`
+- **Log Output**: Cluster logs are written to `build/cluster.log`
+- **Automatic Cleanup**: The cluster is automatically stopped after tests complete
+- **State Management**: The system detects and stops existing clusters before starting a new one
+
+#### Running Python Tests Only
+
+If you already have a cluster running and just want to run Python tests:
+
+```bash
+# Manual approach (without automated cluster setup)
+cd src/main/python/opensearchsql_cli/tests
+pytest
+```
+
+For this manual approach:
+- Prerequisites:
+  - Build the application
+  - Start a local OpenSearch instance manually
+  - Install test frameworks: `pip install -r requirements-dev.txt`
+
+#### Test Data
+
+Test data is located in `test_data/accounts.json` and contains sample account records in bulk format. The automated test system loads this data into the `accounts` index before running tests.
+
+#### Remote SQL Repository
+
+The build system uses `./remote/sql` to store a local copy of the OpenSearch SQL repository. This directory:
+- Is automatically created on first build
+- Is pulled/updated on subsequent builds
+- Is ignored by git (configured in `.gitignore`)
+- Used instead of `../sql` for better isolation
+
+To use a local SQL build during development, you can still use the `-PuseLocalSql=true` flag, which will reference `./remote/sql` instead of `../sql`.
+
+#### Troubleshooting Tests
+
+If tests fail or the cluster doesn't start:
+
+```bash
+# Check cluster logs
+cat build/cluster.log
+
+# Manually stop any stuck cluster processes
+./gradlew stopTestCluster
+
+# Clean and rebuild
+./gradlew clean build
+```
+
+For more details on the test structure and writing new tests, refer to [tests/README.md](src/main/python/opensearchsql_cli/tests/README.md).
 
 ## Style
 - Use [black](https://github.com/psf/black) to format code.

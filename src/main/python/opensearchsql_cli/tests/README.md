@@ -72,12 +72,36 @@ The test suite uses the following dependencies:
 
 ## Running Tests
 
+### Recommended: Automated Testing with Gradle
+
+The easiest way to run all tests is using the Gradle build system, which automatically sets up a test cluster:
+
+```bash
+# From project root - run all tests with automated cluster setup
+./gradlew build
+
+# Run only Python tests with automated cluster setup
+./gradlew pytest
+```
+
+The automated approach:
+- Clones/updates the OpenSearch SQL repository to `./remote/sql`
+- Starts an OpenSearch test cluster in the background
+- Waits for the cluster to be ready
+- Loads test data from `test_data/accounts.json` into the `accounts` index
+- Runs all pytest tests
+- Automatically stops the cluster when done
+
+### Manual Testing (Advanced)
+
+If you want to run tests manually or debug specific tests, you can run pytest directly:
+
 ```bash
 # Change to tests directory
 cd src/main/python/opensearchsql_cli/tests/
 
-# Run all tests
-pytest 
+# Run all tests (requires running OpenSearch cluster)
+pytest
 
 # Run specific test file
 pytest test_main_commands.py
@@ -87,6 +111,38 @@ pytest test_main_commands.py::TestCommands
 
 # Run specific test method
 pytest test_main_commands.py::TestCommands::test_endpoint_command
+
+# Run with verbose output
+pytest -v
+
+# Run with output from print statements
+pytest -s
+```
+
+**Prerequisites for manual testing:**
+1. Install test dependencies: `pip install -r requirements-dev.txt`
+2. Have a running OpenSearch cluster at `localhost:9200`
+3. Ensure the `accounts` index is loaded with test data
+
+### Available Gradle Tasks
+
+For more control over the test cluster, you can use individual Gradle tasks:
+
+```bash
+# Clone or update SQL repository
+./gradlew cloneOrPullSqlRepo
+
+# Start test cluster only
+./gradlew startTestCluster
+
+# Wait for cluster to be ready
+./gradlew waitForCluster
+
+# Load test data
+./gradlew loadTestData
+
+# Stop test cluster
+./gradlew stopTestCluster
 ```
 
 ## Warning Filters
