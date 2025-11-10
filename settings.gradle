@@ -1,0 +1,28 @@
+/*
+ * Copyright OpenSearch Contributors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+rootProject.name = 'opensearch-sql-cli'
+
+// Optionally include the local SQL project as a composite build
+// This allows you to develop against local changes in the sql project
+// Enable by passing -PuseLocalSql=true or adding useLocalSql=true to gradle.properties
+if (settings.hasProperty('useLocalSql') && settings.useLocalSql == 'true') {
+    println "Using local SQL project for unified-query dependencies"
+
+    includeBuild('../sql') {
+        dependencySubstitution {
+            // Substitute the Maven artifacts with local project modules
+            substitute module('org.opensearch.query:unified-query-common') using project(':common')
+            substitute module('org.opensearch.query:unified-query-core') using project(':core')
+            substitute module('org.opensearch.query:unified-query-opensearch') using project(':opensearch')
+            substitute module('org.opensearch.query:unified-query-ppl') using project(':ppl')
+            substitute module('org.opensearch.query:unified-query-sql') using project(':sql')
+            substitute module('org.opensearch.query:unified-query-protocol') using project(':protocol')
+        }
+    }
+} else {
+    println "Using published Maven artifacts for unified-query dependencies"
+    println "To use local SQL project, run with -PuseLocalSql=true"
+}
