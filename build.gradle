@@ -144,19 +144,34 @@ task cloneOrPullSqlRepo(type: Exec) {
 }
 
 task startTestCluster(type: Exec) {
-    description = 'Start OpenSearch test cluster in background'
+    description = 'Start OpenSearch test cluster in background (or detect existing)'
     group = 'verification'
     dependsOn cloneOrPullSqlRepo
 
     commandLine 'bash', '-c', '''
         set -e
+        mkdir -p build
+
+        # Check if cluster is already running
+        if curl -s http://localhost:9200 > /dev/null 2>&1; then
+            echo "Cluster already running at localhost:9200"
+            echo "Using existing cluster (will not stop it later)"
+            touch build/cluster.external
+            rm -f build/cluster.pid
+            exit 0
+        fi
+
+        # No cluster running, start our own
+        echo "No cluster detected, starting test cluster..."
+        rm -f build/cluster.external
+
         cd remote/sql
 
-        # Stop any existing cluster
+        # Stop any existing cluster we started previously
         if [ -f "../../build/cluster.pid" ]; then
             OLD_PID=$(cat ../../build/cluster.pid)
             if ps -p $OLD_PID > /dev/null 2>&1; then
-                echo "Stopping existing cluster (PID: $OLD_PID)..."
+                echo "Stopping previous cluster (PID: $OLD_PID)..."
                 kill $OLD_PID || true
                 sleep 5
             fi
@@ -164,8 +179,6 @@ task startTestCluster(type: Exec) {
         fi
 
         # Start the cluster in background
-        echo "Starting test cluster..."
-        mkdir -p ../../build
         nohup ./gradlew run > ../../build/cluster.log 2>&1 &
         echo $! > ../../build/cluster.pid
         echo "Cluster started with PID: $(cat ../../build/cluster.pid)"
@@ -178,6 +191,12 @@ task waitForCluster(type: Exec) {
     dependsOn startTestCluster
 
     commandLine 'bash', '-c', '''
+        # Quick check if cluster is already ready
+        if curl -s http://localhost:9200 > /dev/null 2>&1; then
+            echo "Cluster is ready!"
+            exit 0
+        fi
+
         echo "Waiting for cluster to be ready..."
         for i in {1..60}; do
             if curl -s http://localhost:9200 > /dev/null 2>&1; then
@@ -193,12 +212,25 @@ task waitForCluster(type: Exec) {
 }
 
 task loadTestData(type: Exec) {
-    description = 'Load test data into OpenSearch cluster'
+    description = 'Load test data into OpenSearch cluster (idempotent)'
     group = 'verification'
     dependsOn waitForCluster
 
     commandLine 'bash', '-c', '''
+        # Check if accounts index already exists with data
+        COUNT=$(curl -s "localhost:9200/accounts/_count" 2>/dev/null | grep -o '"count":[0-9]*' | grep -o '[0-9]*' || echo "0")
+
+        if [ "$COUNT" -gt "0" ]; then
+            echo "Test data already loaded (found $COUNT documents in accounts index)"
+            echo "Skipping data load"
+            exit 0
+        fi
+
         echo "Loading test data..."
+        # Delete index if it exists but is empty
+        curl -s -X DELETE "localhost:9200/accounts" > /dev/null 2>&1 || true
+
+        # Load the data
         curl -X POST "localhost:9200/accounts/_bulk" \
             -H "Content-Type: application/x-ndjson" \
             --data-binary @test_data/accounts.json
@@ -221,10 +253,18 @@ task pytest(type: Exec) {
 }
 
 task stopTestCluster(type: Exec) {
-    description = 'Stop the OpenSearch test cluster'
+    description = 'Stop the OpenSearch test cluster (only if we started it)'
     group = 'verification'
 
     commandLine 'bash', '-c', '''
+        # Don't stop external clusters
+        if [ -f "build/cluster.external" ]; then
+            echo "Cluster is external (not started by us), leaving it running"
+            rm -f build/cluster.external
+            exit 0
+        fi
+
+        # Stop cluster we started
         if [ -f "build/cluster.pid" ]; then
             PID=$(cat build/cluster.pid)
             if ps -p $PID > /dev/null 2>&1; then
@@ -239,16 +279,16 @@ task stopTestCluster(type: Exec) {
             rm -f build/cluster.pid
             echo "Cluster stopped"
         else
-            echo "No cluster PID file found"
+            echo "No cluster to stop"
         fi
     '''
 }
 
-// Make pytest finalize with cluster stop
-pytest.finalizedBy stopTestCluster
+// Make test task depend on pytest (Python tests must pass for build to succeed)
+test.dependsOn pytest
 
-// Make build depend on pytest
-build.dependsOn pytest
+// Stop cluster after all tests complete (not just pytest)
+test.finalizedBy stopTestCluster
 
 spotless {
     java {

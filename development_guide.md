@@ -230,15 +230,58 @@ The build system provides several tasks for managing the test cluster:
 
 #### Test Cluster Management
 
-The test cluster is automatically managed:
-- **PID Tracking**: Cluster process ID is stored in `build/cluster.pid`
+The test cluster is automatically managed with intelligent lifecycle handling:
+- **External Cluster Detection**: Automatically detects if a cluster is already running at `localhost:9200`
+- **Cluster Reuse**: If an external cluster exists, it will be reused (and not stopped after tests)
+- **PID Tracking**: Cluster process ID is stored in `build/cluster.pid` for clusters we start
+- **External Marker**: Creates `build/cluster.external` flag when using an external cluster
 - **Log Output**: Cluster logs are written to `build/cluster.log`
-- **Automatic Cleanup**: The cluster is automatically stopped after tests complete
-- **State Management**: The system detects and stops existing clusters before starting a new one
+- **Automatic Cleanup**: Only stops clusters that we started (external clusters are left running)
+- **Idempotent Data Loading**: Checks if test data already exists before reloading
+- **Fast Reruns**: Subsequent test runs are faster as they skip cluster startup and data loading if already present
+
+#### Test Workflow Scenarios
+
+The build system intelligently handles different development scenarios:
+
+**Scenario 1: No cluster running**
+```bash
+./gradlew pytest
+```
+- Clones/pulls SQL repository
+- Starts a new cluster
+- Loads test data
+- Runs tests
+- Stops the cluster
+
+**Scenario 2: External cluster already running**
+```bash
+# You have a cluster running at localhost:9200
+./gradlew pytest
+```
+- Detects existing cluster
+- Marks it as external
+- Loads test data (if not already present)
+- Runs tests
+- Leaves your cluster running
+
+**Scenario 3: Running tests multiple times**
+```bash
+./gradlew pytest  # First run: starts cluster, loads data
+./gradlew pytest  # Second run: reuses cluster and data (much faster!)
+```
+
+**Scenario 4: Manual cluster control**
+```bash
+./gradlew startTestCluster  # Start cluster manually
+# Do development work, run tests multiple times
+./gradlew pytest            # Tests run against existing cluster
+./gradlew stopTestCluster   # Stop when done
+```
 
 #### Running Python Tests Only
 
-If you already have a cluster running and just want to run Python tests:
+If you want to run pytest directly without Gradle:
 
 ```bash
 # Manual approach (without automated cluster setup)
