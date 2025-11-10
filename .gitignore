@@ -70,6 +70,7 @@ target/
 
 # Gradle
 .gradle
+META-INF/
 
 # Commands history
 .cli_history
