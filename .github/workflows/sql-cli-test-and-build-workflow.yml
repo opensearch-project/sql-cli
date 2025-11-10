@@ -44,15 +44,6 @@ jobs:
 
       - name: Run Gradle Build and Tests
         run: ./gradlew build --info
-        # This command will:
-        # 1. Build Java components
-        # 2. Run Java unit tests
-        # 3. Clone/pull OpenSearch SQL repository to ./remote/sql
-        # 4. Start OpenSearch test cluster in background
-        # 5. Wait for cluster to be ready
-        # 6. Load test data from test_data/accounts.json
-        # 7. Run pytest tests
-        # 8. Automatically stop test cluster
 
       - name: Build Artifact
         run: python setup.py sdist bdist_wheel
