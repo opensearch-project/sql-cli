@@ -198,12 +198,12 @@ task waitForCluster(type: Exec) {
         fi
 
         echo "Waiting for cluster to be ready..."
-        for i in {1..60}; do
+        for i in {1..120}; do
             if curl -s http://localhost:9200 > /dev/null 2>&1; then
                 echo "Cluster is ready!"
                 exit 0
             fi
-            echo "Attempt $i/60: Cluster not ready yet, waiting..."
+            echo "Attempt $i/120: Cluster not ready yet, waiting..."
             sleep 2
         done
         echo "Cluster failed to start within timeout"
