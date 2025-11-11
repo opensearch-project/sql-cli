@@ -6,12 +6,22 @@ This module contains tests for each command-line option of the CLI application.
 
 import pytest
 import os
+import re
 from unittest.mock import patch, MagicMock
 from typer.testing import CliRunner
 from ..main import OpenSearchSqlCli
 
 # Create a CLI runner for testing
 runner = CliRunner()
+
+
+def strip_ansi_codes(text):
+    """
+    Strip ANSI escape codes from text to ensure consistent assertions
+    regardless of whether colors are enabled in the environment.
+    """
+    ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+    return ansi_escape.sub('', text)
 
 
 class TestCommands:
@@ -59,7 +69,8 @@ class TestCommands:
 
         # Verify the result
         assert result.exit_code == 2
-        assert expected_error_text in result.stderr
+        # Strip ANSI codes to ensure consistent behavior in CI and local environments
+        assert expected_error_text in strip_ansi_codes(result.stderr)
 
         test_result = f"Command correctly failed with missing argument error for {flag}"
         return result, test_result
