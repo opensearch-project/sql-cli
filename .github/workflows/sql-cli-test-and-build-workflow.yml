@@ -43,7 +43,7 @@ jobs:
           pip install setuptools wheel
 
       - name: Run Gradle Build and Tests
-        run: ./gradlew build --info
+        run: ./gradlew build 
 
       - name: Build Artifact
         run: python setup.py sdist bdist_wheel
