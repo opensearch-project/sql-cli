@@ -131,16 +131,22 @@ task cloneOrPullSqlRepo(type: Exec) {
     description = 'Clone or pull the SQL repository for testing'
     group = 'verification'
 
-    commandLine 'bash', '-c', '''
+    def skipPull = project.findProperty('skipSqlRepoPull') ?: 'false'
+
+    commandLine 'bash', '-c', """
         if [ -d "remote/sql/.git" ]; then
-            echo "Pulling latest changes in remote/sql..."
-            cd remote/sql && git pull
+            if [ "${skipPull}" = "true" ]; then
+                echo "Skipping git pull for remote/sql (skipSqlRepoPull=true)"
+            else
+                echo "Pulling latest changes in remote/sql..."
+                cd remote/sql && git pull
+            fi
         else
             echo "Cloning SQL repository..."
             mkdir -p remote
             git clone https://github.com/opensearch-project/sql.git remote/sql
         fi
-    '''
+    """
 }
 
 task startTestCluster(type: Exec) {
