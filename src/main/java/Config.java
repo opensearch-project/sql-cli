@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.configuration2.YAMLConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.opensearch.common.settings.Setting;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.sql.common.setting.Settings;
+import org.opensearch.sql.opensearch.setting.OpenSearchSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +44,9 @@ public class Config {
     return new Settings() {
       @Override
       public <T> T getSettingValue(Settings.Key key) {
+        if (!configSettings.containsKey(key)) {
+          throw new IllegalArgumentException("Key " + key + " not found");
+        }
         return (T) configSettings.get(key);
       }
 
@@ -53,85 +58,55 @@ public class Config {
   }
 
   /**
+   * Get default settings from OpenSearchSettings plugin
+   *
+   * @return Map of default settings extracted from OpenSearchSettings
+   */
+  private static Map<Settings.Key, Object> getDefaultSettingsFromPlugin() {
+    Map<Settings.Key, Object> defaults = new HashMap<>();
+    org.opensearch.common.settings.Settings emptySettings =
+        org.opensearch.common.settings.Settings.EMPTY;
+
+    for (Setting<?> setting : OpenSearchSettings.pluginSettings()) {
+      String keyString = setting.getKey();
+      Settings.Key key = Settings.Key.of(keyString).orElse(null);
+
+      if (key != null) {
+        Object defaultValue = setting.getDefault(emptySettings);
+        defaults.put(key, defaultValue);
+      }
+    }
+
+    return defaults;
+  }
+
+  /**
    * Read settings from the OpenSearch SQL CLI configuration file
    *
    * @return Map of settings
    */
   private static Map<Settings.Key, Object> readSettingsFromConfig() {
-    // Default settings to use if config file is not available
-    Map<Settings.Key, Object> defaultSettings =
-        Map.of(
-            Settings.Key.QUERY_SIZE_LIMIT,
-            200,
-            Settings.Key.FIELD_TYPE_TOLERANCE,
-            true,
-            Settings.Key.CALCITE_ENGINE_ENABLED,
-            true,
-            Settings.Key.CALCITE_FALLBACK_ALLOWED,
-            true,
-            Settings.Key.CALCITE_PUSHDOWN_ENABLED,
-            true,
-            Settings.Key.CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR,
-            1.0,
-            Settings.Key.SQL_CURSOR_KEEP_ALIVE,
-            TimeValue.timeValueMinutes(1),
-            Settings.Key.PPL_REX_MAX_MATCH_LIMIT,
-            10,
-            Settings.Key.PPL_JOIN_SUBSEARCH_MAXOUT,
-            50000);
+    // Get default settings by extracting them from OpenSearchSettings constants
+    Map<Settings.Key, Object> defaultSettings = getDefaultSettingsFromPlugin();
 
     try {
-      // Load the YAML configuration
-      loadConfig();
-
-      // Create a mutable map to store settings
+      loadCliYamlConfig();
       Map<Settings.Key, Object> settings = new HashMap<>(defaultSettings);
 
-      // Parse settings from config file
       try {
-        // QUERY_SIZE_LIMIT
-        if (yamlConfig.containsKey("SqlSettings.QUERY_SIZE_LIMIT")) {
-          int value = yamlConfig.getInt("SqlSettings.QUERY_SIZE_LIMIT");
-          settings.put(Settings.Key.QUERY_SIZE_LIMIT, value);
-        }
+        // Dynamically read all settings from YAML config
+        for (Map.Entry<Settings.Key, Object> entry : defaultSettings.entrySet()) {
+          Settings.Key key = entry.getKey();
+          Object defaultValue = entry.getValue();
+          String yamlKey = "SqlSettings." + key.name();
 
-        // FIELD_TYPE_TOLERANCE
-        if (yamlConfig.containsKey("SqlSettings.FIELD_TYPE_TOLERANCE")) {
-          boolean value = yamlConfig.getBoolean("SqlSettings.FIELD_TYPE_TOLERANCE");
-          settings.put(Settings.Key.FIELD_TYPE_TOLERANCE, value);
+          if (yamlConfig.containsKey(yamlKey)) {
+            Object value = parseYamlValue(yamlKey, defaultValue);
+            if (value != null) {
+              settings.put(key, value);
+            }
+          }
         }
-
-        // CALCITE_ENGINE_ENABLED
-        if (yamlConfig.containsKey("SqlSettings.CALCITE_ENGINE_ENABLED")) {
-          boolean value = yamlConfig.getBoolean("SqlSettings.CALCITE_ENGINE_ENABLED");
-          settings.put(Settings.Key.CALCITE_ENGINE_ENABLED, value);
-        }
-
-        // CALCITE_FALLBACK_ALLOWED
-        if (yamlConfig.containsKey("SqlSettings.CALCITE_FALLBACK_ALLOWED")) {
-          boolean value = yamlConfig.getBoolean("SqlSettings.CALCITE_FALLBACK_ALLOWED");
-          settings.put(Settings.Key.CALCITE_FALLBACK_ALLOWED, value);
-        }
-
-        // CALCITE_PUSHDOWN_ENABLED
-        if (yamlConfig.containsKey("SqlSettings.CALCITE_PUSHDOWN_ENABLED")) {
-          boolean value = yamlConfig.getBoolean("SqlSettings.CALCITE_PUSHDOWN_ENABLED");
-          settings.put(Settings.Key.CALCITE_PUSHDOWN_ENABLED, value);
-        }
-
-        // CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR
-        if (yamlConfig.containsKey("SqlSettings.CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR")) {
-          double value =
-              yamlConfig.getDouble("SqlSettings.CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR");
-          settings.put(Settings.Key.CALCITE_PUSHDOWN_ROWCOUNT_ESTIMATION_FACTOR, value);
-        }
-
-        // SQL_CURSOR_KEEP_ALIVE
-        if (yamlConfig.containsKey("SqlSettings.SQL_CURSOR_KEEP_ALIVE")) {
-          int minutes = yamlConfig.getInt("SqlSettings.SQL_CURSOR_KEEP_ALIVE");
-          settings.put(Settings.Key.SQL_CURSOR_KEEP_ALIVE, TimeValue.timeValueMinutes(minutes));
-        }
-
       } catch (Exception e) {
         logger.error("Error parsing settings from config file: " + e.getMessage(), e);
       }
@@ -143,8 +118,44 @@ public class Config {
     }
   }
 
+  /**
+   * Parse a value from YAML config based on the type of the default value
+   *
+   * @param yamlKey The key in the YAML config
+   * @param defaultValue The default value to determine the type
+   * @return The parsed value, or null if parsing fails
+   */
+  private static Object parseYamlValue(String yamlKey, Object defaultValue) {
+    try {
+      if (defaultValue instanceof Integer) {
+        return yamlConfig.getInt(yamlKey);
+      } else if (defaultValue instanceof Boolean) {
+        return yamlConfig.getBoolean(yamlKey);
+      } else if (defaultValue instanceof Double) {
+        return yamlConfig.getDouble(yamlKey);
+      } else if (defaultValue instanceof Long) {
+        return yamlConfig.getLong(yamlKey);
+      } else if (defaultValue instanceof String) {
+        return yamlConfig.getString(yamlKey);
+      } else if (defaultValue instanceof TimeValue) {
+        // Special handling for TimeValue - assume YAML stores minutes as int
+        int minutes = yamlConfig.getInt(yamlKey);
+        return TimeValue.timeValueMinutes(minutes);
+      } else if (defaultValue instanceof List) {
+        // Handle list types
+        return yamlConfig.getList(yamlKey);
+      } else {
+        logger.warn("Unknown setting type for key {}: {}", yamlKey, defaultValue.getClass());
+        return null;
+      }
+    } catch (Exception e) {
+      logger.error("Error parsing value for key {}: {}", yamlKey, e.getMessage());
+      return null;
+    }
+  }
+
   /** Load the YAML configuration from file */
-  private static void loadConfig() {
+  private static void loadCliYamlConfig() {
     if (yamlConfig != null) {
       return;
     }

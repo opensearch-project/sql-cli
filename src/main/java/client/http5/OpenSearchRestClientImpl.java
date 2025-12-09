@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.opensearch.action.admin.cluster.settings.ClusterGetSettingsRequest;
@@ -284,9 +285,8 @@ public class OpenSearchRestClientImpl implements OpenSearchClient {
   }
 
   @Override
-  public NodeClient getNodeClient() {
-    logger.info("Node Client is not supported");
-    throw new UnsupportedOperationException("Unsupported method.");
+  public Optional<NodeClient> getNodeClient() {
+    return Optional.empty();
   }
 
   @Override
