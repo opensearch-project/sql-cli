@@ -32,7 +32,7 @@ repositories {
 ext {
     // ALSO CHANGE sql_version.py's version
     // TODO: single source of truth
-    sqlPluginVersion = "3.3.0"
+    sqlPluginVersion = "3.4.0"
     opensearchClientVersion = '3.2.0'
 }
 
