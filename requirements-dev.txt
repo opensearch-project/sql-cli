@@ -62,7 +62,7 @@ typer==0.16.0
 typing_extensions==4.15.0
 urllib3==2.5.0
 vcrpy==7.0.0
-virtualenv==20.35.4
+virtualenv==20.36.1
 wcwidth==0.2.14
 wrapt==2.0.1
 yarl==1.22.0
