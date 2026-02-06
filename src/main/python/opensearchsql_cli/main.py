@@ -124,6 +124,12 @@ class OpenSearchSqlCli:
                 "-c",
                 help="Display current configuration settings",
             ),
+            remote: bool = typer.Option(
+                False,
+                "--remote",
+                is_flag=True,
+                help="Connect directly to remote cluster without local Java gateway",
+            ),
         ):
             """
             OpenSearch SQL CLI - Command Line Interface for OpenSearch SQL Plug-in
@@ -184,18 +190,22 @@ class OpenSearchSqlCli:
                         )
                     return
 
-            with console.status("Initializing SQL Library...", spinner="dots"):
-                if not self.sql_connection.initialize_sql_library(
-                    host_port, username_password, ignore_ssl, aws_auth
-                ):
-                    if (
-                        hasattr(self.sql_connection, "error_message")
-                        and self.sql_connection.error_message
+            if not remote:
+                with console.status("Initializing SQL Library...", spinner="dots"):
+                    if not self.sql_connection.initialize_sql_library(
+                        host_port, username_password, ignore_ssl, aws_auth
                     ):
-                        console.print(
-                            f"[bold red]ERROR:[/bold red] [red]{self.sql_connection.error_message}[/red]\n"
-                        )
-                    return
+                        if (
+                            hasattr(self.sql_connection, "error_message")
+                            and self.sql_connection.error_message
+                        ):
+                            console.print(
+                                f"[bold red]ERROR:[/bold red] [red]{self.sql_connection.error_message}[/red]\n"
+                            )
+                        return
+            else:
+                # Set remote mode on the connection
+                self.sql_connection.set_remote_mode(True)
 
             # print Banner
             banner = pyfiglet.figlet_format("OpenSearch", font="slant")
