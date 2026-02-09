@@ -9,6 +9,7 @@ from rich.status import Status
 from rich.markup import escape
 from .query_results import QueryResults
 from .explain_results import ExplainResults
+from .error_formatter import ErrorFormatter
 
 # Create a console instance for rich formatting
 console = Console()
@@ -56,6 +57,12 @@ class ExecuteQuery:
         # Errors handling
         # print_function(f"Before format: \n" + escape(result) + "\n")
         if "Exception" in result:
+            # Try to format as an enhanced ErrorReport first
+            if ErrorFormatter.format_error(result, print_function, query):
+                # This was an enhanced ErrorReport and has been formatted
+                return False, result, result
+
+            # Fall back to legacy error handling
             if "index_not_found_exception" in result:
                 print_function("[bold red]Index does not exist[/bold red]")
             elif "SyntaxCheckException" in result:

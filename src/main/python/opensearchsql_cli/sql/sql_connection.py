@@ -6,6 +6,9 @@ Handles connection to SQL library and OpenSearch Cluster configuration.
 
 from py4j.java_gateway import JavaGateway, GatewayParameters
 import sys
+import json
+import requests
+from requests.auth import HTTPBasicAuth
 from rich.console import Console
 from .sql_library_manager import sql_library_manager
 from .verify_cluster import VerifyCluster
@@ -14,6 +17,99 @@ from ..config.config import config_manager
 
 # Create a console instance for rich formatting
 console = Console()
+
+
+class DirectRestExecutor:
+    """
+    Executor that sends queries directly to the OpenSearch cluster REST API
+    without using the local Java gateway
+    """
+
+    def __init__(self, url, username=None, password=None, verify_ssl=True):
+        """
+        Initialize the DirectRestExecutor
+
+        Args:
+            url: Base URL of the OpenSearch cluster (e.g., "https://localhost:9200")
+            username: Optional username for authentication
+            password: Optional password for authentication
+            verify_ssl: Whether to verify SSL certificates
+        """
+        self.url = url
+        self.username = username
+        self.password = password
+        self.verify_ssl = verify_ssl
+        self.auth = HTTPBasicAuth(username, password) if username and password else None
+
+    def execute_query(self, query, is_ppl=True, is_explain=False, format="json"):
+        """
+        Execute a query directly against the cluster REST API
+
+        Args:
+            query: The SQL or PPL query string
+            is_ppl: True if the query is PPL, False if SQL
+            is_explain: True if query is explain
+            format: Output format (json, table, csv)
+
+        Returns:
+            Query result string formatted according to the specified format
+        """
+        try:
+            # Determine the endpoint
+            endpoint = "/_plugins/_ppl" if is_ppl else "/_plugins/_sql"
+
+            # Build the request body
+            body = {"query": query}
+
+            # Add format parameter for non-explain queries
+            if not is_explain:
+                if format.lower() == "csv":
+                    body["format"] = "csv"
+                elif format.lower() == "table" or format.lower() == "json":
+                    body["format"] = "jdbc"
+
+            # For explain queries, use the explain endpoint
+            if is_explain:
+                endpoint = f"{endpoint}/_explain"
+
+            # Make the request
+            response = requests.post(
+                f"{self.url}{endpoint}",
+                json=body,
+                auth=self.auth,
+                verify=self.verify_ssl,
+                headers={"Content-Type": "application/json"}
+            )
+
+            # Check for HTTP errors
+            response.raise_for_status()
+
+            # For CSV format, return the raw text
+            if format.lower() == "csv" and not is_explain:
+                return response.text
+
+            # For other formats, parse JSON and format appropriately
+            result_json = response.json()
+
+            # Handle explain responses
+            if is_explain:
+                return json.dumps(result_json, indent=2)
+
+            # For regular queries, return formatted JSON
+            return json.dumps(result_json, indent=2)
+
+        except requests.exceptions.RequestException as e:
+            # Handle connection errors
+            error_msg = f"Request failed: {str(e)}"
+            if hasattr(e, "response") and e.response is not None:
+                try:
+                    error_json = e.response.json()
+                    error_msg = json.dumps(error_json, indent=2)
+                except:
+                    error_msg = f"HTTP {e.response.status_code}: {e.response.text}"
+            return f"Exception: {error_msg}"
+        except Exception as e:
+            return f"Exception: {str(e)}"
 
 
 class SqlConnection:
@@ -46,6 +142,11 @@ class SqlConnection:
         self.url = None
         self.client = None
 
+        # Remote mode (direct REST API) support
+        self.remote_mode = False
+        self.direct_executor = None
+        self.ignore_ssl = False
+
     def verify_opensearch_connection(
         self, host_port=None, username_password=None, ignore_ssl=False, aws_auth=False
     ):
@@ -62,6 +163,9 @@ class SqlConnection:
             bool: True if successful, False otherwise
         """
         try:
+            # Store ignore_ssl for later use
+            self.ignore_ssl = ignore_ssl
+
             # Parse username_password if provided
             if username_password and ":" in username_password:
                 self.username, self.password = username_password.split(":", 1)
@@ -228,9 +332,34 @@ class SqlConnection:
             self.sql_connected = False
             return False
 
+    def set_remote_mode(self, enabled=True):
+        """
+        Enable or disable remote mode (direct REST API connection)
+
+        Args:
+            enabled: Whether to enable remote mode
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        self.remote_mode = enabled
+
+        if enabled and self.url:
+            # Initialize the direct executor
+            self.direct_executor = DirectRestExecutor(
+                url=self.url,
+                username=self.username,
+                password=self.password,
+                verify_ssl=not self.ignore_ssl
+            )
+            # Mark as connected in remote mode
+            self.opensearch_connected = True
+            return True
+        return False
+
     def query_executor(self, query, is_ppl=True, is_explain=False, format="json"):
         """
-        Execute a query through the SQL Library service
+        Execute a query through the SQL Library service or direct REST API
 
         Args:
             query: The SQL or PPL query string
@@ -241,6 +370,11 @@ class SqlConnection:
         Returns:
             Query result string formatted according to the specified format
         """
+        # Use direct REST API in remote mode
+        if self.remote_mode and self.direct_executor:
+            return self.direct_executor.execute_query(query, is_ppl, is_explain, format)
+
+        # Otherwise use the Java gateway
         if not self.sql_connected or not self.sql_lib:
             console.print(
                 "[bold red]ERROR:[/bold red] [red]Unable to connect to SQL library[/red]"

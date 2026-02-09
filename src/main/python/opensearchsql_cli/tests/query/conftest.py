@@ -209,3 +209,117 @@ def mock_connection():
         '{"schema":[{"name":"test"}],"datarows":[["value"]]}'
     )
     return mock_connection
+
+
+# Fixtures for enhanced error reports (ErrorReport format)
+@pytest.fixture
+def mock_error_report_syntax():
+    """
+    Fixture that returns a mock syntax error in ErrorReport format.
+    """
+    return """Exception: {
+  "status": 400,
+  "error": {
+    "type": "ErrorReport",
+    "code": "SYNTAX_ERROR",
+    "reason": "Invalid Query",
+    "details": "[fieldz] is not a valid term at this part of the query: 'source=big5 | fieldz' <-- HERE. Expecting one of 48 possible tokens. Some examples: 'WHERE', 'FIELDS', 'TABLE', 'RENAME', 'STATS', ...",
+    "location": [
+      "while parsing the query"
+    ],
+    "context": {
+      "query": "source=big5 | fieldz message",
+      "position": {
+        "line": 1,
+        "column": 14
+      },
+      "offending_token": "fieldz"
+    },
+    "suggestion": "Expected one of 48 possible tokens. Examples: 'WHERE', 'FIELDS', 'TABLE', 'RENAME', 'STATS'"
+  }
+}"""
+
+
+@pytest.fixture
+def mock_error_report_field():
+    """
+    Fixture that returns a mock field not found error in ErrorReport format.
+    """
+    return """Exception: {
+  "status": 400,
+  "error": {
+    "type": "ErrorReport",
+    "code": "FIELD_NOT_FOUND",
+    "reason": "Invalid Query",
+    "details": "Field [messag] not found.",
+    "location": [
+      "while resolving field references"
+    ],
+    "context": {
+      "field_name": "messag",
+      "position": {
+        "line": 1,
+        "column": 21
+      },
+      "available_fields": ["agent", "agent.ephemeral_id", "agent.id", "agent.name", "agent.type", "event.dataset", "host.name", "message"]
+    },
+    "suggestion": "Did you mean: 'message'?"
+  }
+}"""
+
+
+@pytest.fixture
+def mock_error_report_field_removed():
+    """
+    Fixture that returns a mock field removed by fields command error in ErrorReport format.
+    """
+    return """Exception: {
+  "status": 400,
+  "error": {
+    "type": "ErrorReport",
+    "code": "FIELD_NOT_FOUND",
+    "reason": "Invalid Query",
+    "details": "Field [host.name] not found.",
+    "location": [
+      "while resolving field references"
+    ],
+    "context": {
+      "field_name": "host.name",
+      "position": {
+        "line": 1,
+        "column": 37
+      },
+      "fields_command_used": true,
+      "available_fields": ["message"]
+    },
+    "suggestion": "Field [host.name] not in current context. Note: A 'fields' command earlier in the query removed fields not explicitly listed. Current fields: 'message'"
+  }
+}"""
+
+
+@pytest.fixture
+def mock_error_report_is_not_null():
+    """
+    Fixture that returns a mock IS NOT NULL syntax error in ErrorReport format.
+    """
+    return """Exception: {
+  "status": 400,
+  "error": {
+    "type": "ErrorReport",
+    "code": "SYNTAX_ERROR",
+    "reason": "Invalid Query",
+    "details": "[is] is not a valid term at this part of the query: '...ig5 | where message is' <-- HERE. Expecting one of 24 possible tokens. Some examples: EOF, 'IN', 'NOT', 'OR', 'AND', ...",
+    "location": [
+      "while parsing the query"
+    ],
+    "context": {
+      "query": "source=big5 | where message is not null",
+      "position": {
+        "line": 1,
+        "column": 28
+      },
+      "offending_token": "is"
+    },
+    "suggestion": "PPL doesn't support 'IS NOT NULL' syntax. Use isnotnull(message) function instead."
+  }
+}"""
