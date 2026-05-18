@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'base'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gradleup.shadow' version '9.4.1'
     id 'com.diffplug.spotless' version '7.1.0'
 }
 
@@ -30,9 +30,7 @@ repositories {
 }
 
 ext {
-    // ALSO CHANGE sql_version.py's version
-    // TODO: single source of truth
-    sqlPluginVersion = "3.4.0"
+    sqlPluginVersion = "3.6.0"
     opensearchClientVersion = '3.2.0'
 }
 
@@ -300,7 +298,7 @@ spotless {
     java {
         target fileTree('.') {
             include '**/*.java'
-            exclude '**/build/**', '**/build-*/**', 'src/main/gen/**'
+            exclude '**/build/**', '**/build-*/**', 'src/main/gen/**', 'remote/**'
         }
         importOrder()
         licenseHeader("/*\n" +
@@ -316,7 +314,7 @@ spotless {
 
 shadowJar {
     archiveBaseName.set('opensearchsqlcli')
-    duplicatesStrategy = DuplicatesStrategy.FAIL
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     zip64 = true
 
     manifest {

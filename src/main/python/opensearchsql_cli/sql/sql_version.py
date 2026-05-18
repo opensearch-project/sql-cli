@@ -48,9 +48,7 @@ class SqlVersion:
         return self._get_jar_path()
 
     def _get_jar_path(self):
-        return os.path.join(
-            PROJECT_ROOT, "build", "libs", f"opensearchsqlcli-all.jar"
-        )
+        return os.path.join(PROJECT_ROOT, "build", "libs", f"opensearchsqlcli-all.jar")
 
     def _build_sqlcli_jar(self, rebuild=False):
         """
