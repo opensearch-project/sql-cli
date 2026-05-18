@@ -42,7 +42,7 @@ pycparser==2.23
 pyfiglet==1.0.3
 Pygments==2.19.2
 pyproject-api==1.10.0
-pytest==8.4.1
+pytest==9.0.3
 python-dateutil==2.9.0.post0
 PyYAML==6.0.3
 readme_renderer==44.0
