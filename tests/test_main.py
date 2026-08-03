@@ -25,21 +25,6 @@ class TestMain:
         load_data(connection, doc)
 
         err_message = "Can not connect to endpoint %s" % INVALID_ENDPOINT
-        expected_output = {
-            "root": {
-                "name": "ProjectOperator",
-                "description": {"fields": "[a]"},
-                "children": [
-                    {
-                        "name": "OpenSearchIndexScan",
-                        "description": {
-                            "request": 'OpenSearchQueryRequest(indexName=opensearchsql_cli_test, sourceBuilder={"from":0,"size":150,"timeout":"1m","_source":{"includes":["a"],"excludes":[]}}, searchDone=false)'
-                        },
-                        "children": [],
-                    }
-                ],
-            }
-        }
         expected_tabular_output = dedent(
             """\
             fetched rows / total rows = 1/1
@@ -57,7 +42,24 @@ class TestMain:
 
             # test -q -e
             result = runner.invoke(cli, [f"-q{QUERY}", "-e"])
-            mock_echo.assert_called_with(expected_output)
+            # The scan's "request" is the SQL plugin's internal query
+            # representation, and its exact text changes between server releases
+            # (PIT fields, dropped "excludes", dropped "searchDone", ...).
+            # Assert the plan structure exactly and only the stable parts of the
+            # request, so this does not break on every server bump.
+            explain_output = mock_echo.call_args[0][0]
+            root = explain_output["root"]
+            assert root["name"] == "ProjectOperator"
+            assert root["description"] == {"fields": "[a]"}
+
+            scan = root["children"][0]
+            assert scan["name"] == "OpenSearchIndexScan"
+            assert scan["children"] == []
+
+            request = scan["description"]["request"]
+            assert "indexName=%s" % TEST_INDEX_NAME in request
+            assert '"size":150' in request
+            assert '"includes":["a"]' in request
             assert result.exit_code == 0
 
             # test -q

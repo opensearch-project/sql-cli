@@ -19,7 +19,10 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
-        opensearch-version: [ latest ]
+        # Pinned rather than 'latest': the explain assertions in tests/test_main.py
+        # depend on the SQL plugin's query representation, which changes between
+        # server releases. Bumping this may require updating those expectations.
+        opensearch-version: [ 3.7.0 ]
 
     steps:
       - name: Checkout SQL CLI
