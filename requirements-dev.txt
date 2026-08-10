@@ -55,7 +55,7 @@ s3transfer==0.13.1
 SecretStorage==3.4.0
 shellingham==1.5.4
 six==1.17.0
-soupsieve==2.8
+soupsieve==2.8.4
 tox==4.28.4
 twine==6.1.0
 typer==0.16.0
