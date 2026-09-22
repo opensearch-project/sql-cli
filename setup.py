@@ -9,7 +9,13 @@ import ast
 from setuptools import setup, find_packages
 
 install_requirements = [
-    "click == 7.1.2",
+    # CVE-2026-7246: command injection in click.edit(), fixed in click 8.3.3.
+    # click >= 8.2 requires Python >= 3.10, so the patched release cannot be
+    # required unconditionally while this branch still supports Python 3.9.
+    # Use environment markers so interpreters that can take the fix get it, and
+    # older ones fall back to the newest release they can actually resolve.
+    'click >= 8.3.3; python_version >= "3.10"',
+    'click >= 8.1.8, < 8.2; python_version < "3.10"',
     "prompt_toolkit == 2.0.6",
     "Pygments == 2.15.1",
     "cli_helpers[styles] == 2.3.1",
