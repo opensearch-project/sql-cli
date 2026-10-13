@@ -27,7 +27,7 @@ markdown-it-py==4.0.0
 mdurl==0.1.2
 mock==5.2.0
 more-itertools==10.8.0
-multidict==6.7.0
+multidict==6.9.1
 mypy_extensions==1.1.0
 nh3==0.3.2
 opensearch-py==3.0.0
