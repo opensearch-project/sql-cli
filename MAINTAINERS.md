@@ -18,7 +18,6 @@ This document contains a list of maintainers in this repo. See [opensearch-proje
 | Chen Dai          | [dai-chen](https://github.com/dai-chen)             | Amazon      |
 | Vamsi Manohar     | [vamsimanohar](https://github.com/vamsimanohar)     | Amazon      |
 | Peng Huo          | [penghuo](https://github.com/penghuo)               | Amazon      |
-| Sean Kao          | [seankao-az](https://github.com/seankao-az)         | Amazon      |
 | Max Ksyunz        | [MaxKsyunz](https://github.com/MaxKsyunz)           | BitQuill    |
 | Yury Fridlyand    | [Yury-Fridlyand](https://github.com/Yury-Fridlyand) | BitQuill    |
 | Anirudha Jadhav   | [anirudha](https://github.com/anirudha)             | Amazon      |
@@ -33,3 +32,4 @@ This document contains a list of maintainers in this repo. See [opensearch-proje
 | Eugene Lee        | [eugenesk24](https://github.com/eugenesk24)             | Amazon      |
 | Zhongnan Su       | [zhongnansu](https://github.com/zhongnansu)             | Amazon      |
 | Chloe Zhang       | [chloe-zh](https://github.com/chloe-zh)                 | Amazon      |
+| Sean Kao          | [seankao-az](https://github.com/seankao-az)             | Amazon      |
