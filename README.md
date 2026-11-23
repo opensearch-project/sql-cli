@@ -19,7 +19,7 @@
 [![Latest Version](https://img.shields.io/pypi/v/opensearchsql.svg)](https://pypi.python.org/pypi/opensearchsql/)
 [![Documentation](https://img.shields.io/badge/documentation-blue.svg)](https://opensearch.org/docs/latest/search-plugins/sql/cli/)
 [![Chat](https://img.shields.io/badge/chat-on%20forums-blue)](https://forum.opensearch.org/c/plugins/sql)
-![PyPi Downloads](https://img.shields.io/pypi/dm/opensearchsql.svg)
+[![PyPI Downloads](https://static.pepy.tech/badge/opensearchsql)](https://pepy.tech/project/opensearchsql)
 ![PRs welcome!](https://img.shields.io/badge/PRs-welcome!-success)
 
 # OpenSearch SQL CLI
